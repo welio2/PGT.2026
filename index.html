@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">Menu Inicial - Forca ou Jogo do Bilhão</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #212121, #0b1220 60%, #04070e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        #menu-container[hidden] {
+            display: none;
+        }
+
+        .menu-container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 26px 28px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            letter-spacing: 0.8px;
+        }
+
+        .hero p {
+            max-width: 820px;
+            margin: 0 auto;
+            color: rgba(255,255,255,0.82);
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .option-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 26px;
+            padding: 28px;
+            box-shadow: 0 25px 65px rgba(0,0,0,0.32);
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.28);
+        }
+
+        .option-card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-card p {
+            color: rgba(255,255,255,0.76);
+            line-height: 1.7;
+            margin-bottom: 18px;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            color: #f8f8f8;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            background: linear-gradient(135deg, #f5c542, #f07b3f);
+            box-shadow: 0 14px 30px rgba(240,123,63,0.25);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(240,123,63,0.35);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.22);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-top: 12px;
+        }
+
+        .info-box {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 18px;
+            border-radius: 18px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #f5c542;
+        }
+
+        footer {
+            margin-top: 18px;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+        }
+
+        .grand-score {
+            margin-top: 10px;
+            color: #f5c542;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .profile-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 58px;
+            height: 58px;
+            border: 2px solid rgba(255,255,255,0.18);
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f5c542, #f07b3f);
+            color: #111827;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 18px 42px rgba(240,123,63,0.25);
+            cursor: pointer;
+            z-index: 30;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .profile-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 22px 48px rgba(240,123,63,0.35);
+        }
+
+        .music-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 30;
+            min-height: 48px;
+            padding: 0 16px;
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 999px;
+            background: rgba(18,24,37,0.9);
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .music-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.12);
+        }
+
+        .music-button:focus-visible {
+            outline: 3px solid #f5c542;
+            outline-offset: 3px;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .profile-menu {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            width: min(320px, calc(100vw - 30px));
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+            background: rgba(18,24,37,0.96);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            box-shadow: 0 22px 60px rgba(0,0,0,0.35);
+            padding: 12px;
+            display: none;
+            z-index: 25;
+        }
+
+        .profile-menu.open {
+            display: block;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 8px;
+        }
+
+        .profile-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f5c542, #f07b3f);
+            color: #111827;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            object-fit: cover;
+        }
+
+        .profile-button.profile-photo,
+        .profile-avatar.profile-photo {
+            background: #111827;
+            text-indent: -9999px;
+        }
+
+        .profile-photo-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .profile-name small {
+            display: block;
+            color: rgba(255,255,255,0.72);
+            font-weight: 500;
+        }
+
+        .profile-actions {
+            display: grid;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .profile-details {
+            margin-top: 12px;
+            padding: 14px 10px 6px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .profile-summary {
+            margin-bottom: 14px;
+            color: rgba(255,255,255,0.72);
+            font-size: 0.85rem;
+        }
+
+        .profile-total {
+            display: block;
+            margin-top: 4px;
+            color: #f5c542;
+            font-size: 1.65rem;
+            font-weight: 800;
+        }
+
+        .profile-scores {
+            display: grid;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .profile-scores li {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: rgba(255,255,255,0.82);
+            font-size: 0.9rem;
+        }
+
+        .profile-scores strong {
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .challenge-menu {
+            margin-top: 12px;
+            padding: 14px 10px 6px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .challenge-heading {
+            margin: 0 0 8px;
+            color: #f5c542;
+            font-size: 0.95rem;
+        }
+
+        .challenge-list {
+            display: grid;
+            gap: 8px;
+            margin: 0 0 14px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .challenge-item {
+            display: grid;
+            gap: 5px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .challenge-item.completed {
+            border-color: rgba(34,197,94,0.45);
+            background: rgba(34,197,94,0.08);
+        }
+
+        .challenge-name {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .challenge-description,
+        .challenge-progress,
+        .challenge-reward,
+        .challenge-status {
+            color: rgba(255,255,255,0.72);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .challenge-status {
+            color: #f5c542;
+            font-weight: 700;
+        }
+
+        .challenge-item.completed .challenge-status {
+            color: #86efac;
+        }
+
+        .achievement-menu {
+            margin-top: 12px;
+            padding: 14px 10px 6px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .settings-menu {
+            margin-top: 12px;
+            padding: 14px 10px 6px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .settings-title {
+            margin-bottom: 6px;
+            color: #f5c542;
+            font-size: 1rem;
+        }
+
+        .settings-description {
+            margin-bottom: 10px;
+            color: rgba(255,255,255,0.72);
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+
+        .language-setting {
+            display: grid;
+            gap: 7px;
+            margin: 12px 0;
+            color: rgba(255,255,255,0.82);
+            font-size: 0.9rem;
+        }
+
+        .language-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: #222b3b;
+            color: #fff;
+            font: inherit;
+        }
+
+        .language-select option {
+            background: #fff;
+            color: #111827;
+        }
+
+        .language-status {
+            min-height: 1em;
+            color: #fca5a5;
+            font-size: 0.8rem;
+        }
+
+        .preference-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .preference-toggle input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: #f5c542;
+        }
+
+        .preference-status {
+            min-height: 1em;
+            margin: 6px 0 0;
+            color: #fca5a5;
+            font-size: 0.8rem;
+        }
+
+        .achievement-summary {
+            margin-bottom: 12px;
+            color: #f5c542;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .achievement-list {
+            display: grid;
+            gap: 8px;
+            max-height: min(48vh, 360px);
+            overflow-y: auto;
+            padding-right: 4px;
+            list-style: none;
+        }
+
+        .achievement-item {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr);
+            gap: 4px 10px;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .achievement-icon {
+            grid-row: 1 / 4;
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.16);
+            background: linear-gradient(145deg, #39414f, #1d2330);
+            box-shadow: inset 0 0 0 3px rgba(255,255,255,0.04);
+            font-size: 1.45rem;
+            filter: grayscale(1);
+            opacity: 0.62;
+        }
+
+        .achievement-item.unlocked {
+            border-color: rgba(245,197,66,0.45);
+            background: rgba(245,197,66,0.08);
+        }
+
+        .achievement-item.unlocked .achievement-icon {
+            border-color: #f5c542;
+            background: linear-gradient(145deg, #ffe793, #c99023);
+            box-shadow: 0 5px 16px rgba(245,197,66,0.22), inset 0 0 0 3px rgba(255,255,255,0.38);
+            filter: none;
+            opacity: 1;
+        }
+
+        .achievement-name {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .achievement-description,
+        .achievement-status {
+            color: rgba(255,255,255,0.68);
+            font-size: 0.8rem;
+        }
+
+        .achievement-item.unlocked .achievement-status {
+            color: #f5c542;
+        }
+
+        .achievement-toast {
+            position: fixed;
+            top: 50%;
+            right: 24px;
+            z-index: 40;
+            width: min(340px, calc(100vw - 32px));
+            display: grid;
+            gap: 7px;
+            padding: 18px 20px;
+            border: 1px solid rgba(245,197,66,0.65);
+            border-radius: 18px;
+            background: rgba(18,24,37,0.97);
+            box-shadow: 0 20px 55px rgba(0,0,0,0.45);
+            opacity: 0;
+            transform: translate(120%, -50%);
+            transition: opacity 220ms ease, transform 220ms ease;
+        }
+
+        .achievement-toast.visible {
+            opacity: 1;
+            transform: translate(0, -50%);
+        }
+
+        .achievement-toast-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #f5c542;
+            font-weight: 800;
+        }
+
+        .achievement-toast-medal {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border: 2px solid #f5c542;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffe793, #c99023);
+            font-size: 1.1rem;
+        }
+
+        .achievement-toast-name {
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .achievement-toast-description {
+            color: rgba(255,255,255,0.72);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .achievement-toast[hidden] {
+            display: none;
+        }
+
+        .profile-action {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #f3f3f3;
+            border-radius: 12px;
+            padding: 10px 12px;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .profile-action:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        @media (max-width: 860px) {
+            .hero h1 {
+                font-size: 2.4rem;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .achievement-toast {
+                transition: none;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+    <script src="site-language.js"></script>
+</head>
+<body>
+    <button class="music-button" id="music-button" type="button" aria-pressed="false" data-i18n="musicPlay">▶ Tocar música</button>
+    <button class="profile-button" id="profile-button" type="button" aria-label="Perfil do jogador" data-i18n-aria-label="profileButtonLabel" aria-controls="profile-menu" aria-expanded="false">J</button>
+    <audio id="menu-music" src="The%20Jackson%205%20I%20Want%20You%20Back%20on%20The%20Ed%20Sullivan%20Show%20-%20The%20Ed%20Sullivan%20Show.mp3" loop preload="none"></audio>
+    <span class="visually-hidden" id="music-status" aria-live="polite"></span>
+
+    <aside class="profile-menu" id="profile-menu" aria-label="Menu do perfil do jogador" data-i18n-aria-label="profileMenuLabel">
+        <div class="profile-header">
+            <div class="profile-avatar" id="profile-avatar">J</div>
+            <div class="profile-name"><span id="profile-name">Jogador</span><small data-i18n="profileShortLabel">Perfil do jogador</small></div>
+        </div>
+        <div class="profile-actions">
+            <button class="profile-action" type="button" id="view-profile" aria-expanded="false" aria-controls="profile-details" data-i18n="viewProfile">Ver perfil</button>
+            <button class="profile-action" type="button" id="view-challenges" aria-expanded="false" aria-controls="challenge-menu" data-i18n="challenges">Desafios</button>
+            <button class="profile-action" type="button" id="view-achievements" aria-expanded="false" aria-controls="achievement-menu" data-i18n="achievements">Conquistas</button>
+            <button class="profile-action" type="button" id="view-settings" aria-expanded="false" aria-controls="settings-menu" data-i18n="settings">Configuração</button>
+        </div>
+        <section class="profile-details" id="profile-details" aria-label="Resumo de pontuação" data-i18n-aria-label="profileSummary" hidden>
+            <p class="profile-summary"><span data-i18n="profileSummary">Pontuação total acumulada</span>
+                <strong class="profile-total" data-score-grand-total>0</strong>
+            </p>
+            <ul class="profile-scores" aria-label="Pontuação por jogo" data-i18n-aria-label="profileScores">
+                <li><span data-i18n="gameCelebrity">Acerte o Famoso</span> <strong data-score-total="famosos">0</strong></li>
+                <li><span data-i18n="gameFlag">Adivinhe a Bandeira</span> <strong data-score-total="bandeiras">0</strong></li>
+                <li><span data-i18n="gameCapitals">Capitais dos Países</span> <strong data-score-total="capitais">0</strong></li>
+                <li><span data-i18n="gameRiddles">Charadas do Sócrates</span> <strong data-score-total="charadas">0</strong></li>
+                <li><span data-i18n="gameHangman">Forca</span> <strong data-score-total="forca">0</strong></li>
+                <li><span data-i18n="gameMole">Jogo da Marmota</span> <strong data-score-total="marmota">0</strong></li>
+                <li><span data-i18n="gameTicTacToe">Jogo da Velha</span> <strong data-score-total="velha">0</strong></li>
+                <li><span data-i18n="gameBillion">Jogo do Bilhão</span> <strong data-score-total="bilhao">0</strong></li>
+                <li><span data-i18n="gameDots">Jogo do Pontinho</span> <strong data-score-total="pontinho">0</strong></li>
+                <li><span data-i18n="gameCups">Jogo dos Copos</span> <strong data-score-total="copos">0</strong></li>
+                <li><span data-i18n="gameMagnitude">Magnitude</span> <strong data-score-total="magnitude">0</strong></li>
+                <li><span data-i18n="gameMemory">Mega Jogo da Memória Gourmet</span> <strong data-score-total="memoria">0</strong></li>
+                <li><span data-i18n="gameSolitaire">Solitário</span> <strong data-score-total="solitario">0</strong></li>
+                <li><span data-i18n="gameTetris">Tetris</span> <strong data-score-total="tetris">0</strong></li>
+            </ul>
+        </section>
+        <section class="challenge-menu" id="challenge-menu" aria-label="Desafios do jogador" data-i18n-aria-label="challengeMenuLabel" hidden>
+            <h2 class="challenge-heading" data-i18n="dailyChallenges">Desafios diários</h2>
+            <ul class="challenge-list" id="daily-challenge-list"></ul>
+            <h2 class="challenge-heading" data-i18n="weeklyChallenges">Desafios semanais</h2>
+            <ul class="challenge-list" id="weekly-challenge-list"></ul>
+        </section>
+        <section class="achievement-menu" id="achievement-menu" aria-label="Conquistas do jogador" data-i18n-aria-label="achievementMenuLabel" hidden>
+            <p class="achievement-summary" id="achievement-summary" aria-live="polite"></p>
+            <ul class="achievement-list" id="achievement-list"></ul>
+        </section>
+        <section class="settings-menu" id="settings-menu" aria-label="Configuração do perfil" data-i18n-aria-label="settingsMenuLabel" hidden>
+            <h2 class="settings-title" data-i18n="settings">Configuração</h2>
+            <p class="settings-description" data-i18n="settingsDescription">Gerencie seu nome e sua foto de perfil.</p>
+            <label class="language-setting" for="language-select">
+                <span data-i18n="languageLabel">Idioma</span>
+                <select class="language-select" id="language-select">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="de">Deutsch</option>
+                    <option value="pt-BR">Português (Brasil)</option>
+                    <option value="ja">日本語</option>
+                    <option value="ru">Русский</option>
+                    <option value="fr">Français</option>
+                    <option value="it">Italiano</option>
+                </select>
+            </label>
+            <p class="language-status" id="language-status" role="status" aria-live="polite"></p>
+            <label class="preference-toggle" for="show-explanatory-text">
+                <input id="show-explanatory-text" type="checkbox" checked>
+                <span data-i18n="showExplanations">Mostrar textos explicativos</span>
+            </label>
+            <p class="preference-status" id="explanatory-text-status" role="status" aria-live="polite"></p>
+            <div class="profile-actions">
+                <button class="profile-action" type="button" id="change-photo" data-i18n="changePhoto">Editar foto de perfil</button>
+                <button class="profile-action" type="button" id="remove-photo" data-i18n="removePhoto" hidden>Remover foto</button>
+                <input class="visually-hidden" id="photo-input" type="file" accept="image/*">
+                <button class="profile-action" type="button" id="change-name" data-i18n="changeName">Trocar nome</button>
+                <button class="profile-action" type="button" id="logout-profile" data-i18n="logout">Sair</button>
+            </div>
+        </section>
+    </aside>
+
+    <aside class="achievement-toast" id="achievement-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <span class="achievement-toast-title"><span class="achievement-toast-medal" id="achievement-toast-medal" aria-hidden="true">🏆</span> <span data-i18n="achievementToast">Conquista desbloqueada!</span></span>
+        <span class="achievement-toast-name" id="achievement-toast-name"></span>
+        <span class="achievement-toast-description" id="achievement-toast-description"></span>
+    </aside>
+
+    <main class="menu-container" id="menu-container" hidden>
+        <section class="hero">
+            <h1 id="menu-title">Olá!</h1>
+            <p data-explanatory-text data-i18n="heroDescription">Escolha um dos 15 jogos abaixo para começar.</p>
+        </section>
+
+        <section class="options-grid">
+            <article class="option-card">
+                <h2><span aria-hidden="true">🕵️</span> <span data-i18n="gameCelebrity">Acerte o Famoso</span></h2>
+                <p data-explanatory-text data-i18n="descriptionCelebrity">Reconheça personalidades em fotos borradas que ficam mais nítidas a cada erro.</p>
+                <div class="button-group">
+                    <a class="btn" href="acerte-o-famoso.html" data-i18n-play="gameCelebrity">Jogar Acerte o Famoso</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🚩</span> <span data-i18n="gameFlag">Adivinhe a Bandeira</span></h2>
+                <p data-explanatory-text data-i18n="descriptionFlag">Observe a bandeira e escolha o país correto.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-bandeiras.html" data-i18n-play="gameFlag">Jogar Bandeiras</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🚢</span> <span data-i18n="gameBattleship">Batalha Naval</span></h2>
+                <p data-explanatory-text data-i18n="descriptionBattleship">Encontre a frota inimiga enquanto protege seus navios dos disparos do computador.</p>
+                <div class="button-group">
+                    <a class="btn" href="batalha-naval.html" data-i18n-play="gameBattleship">Jogar Batalha Naval</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🌍</span> <span data-i18n="gameCapitals">Capitais dos Países</span></h2>
+                <p data-explanatory-text data-i18n="descriptionCapitals">Teste seus conhecimentos de geografia reconhecendo capitais do mundo.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-capitais.html" data-i18n-play="gameCapitals">Jogar Capitais</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🧠</span> <span data-i18n="gameRiddles">Charadas do Sócrates</span></h2>
+                <p data-explanatory-text data-i18n="descriptionRiddles">Resolva enigmas divertidos contra o tempo e ganhe pontos.</p>
+                <div class="button-group">
+                    <a class="btn" href="charadas%20do%20socrates/index.html" data-i18n-play="gameRiddles">Jogar Charadas</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🪄</span> <span data-i18n="gameHangman">Forca</span></h2>
+                <p data-explanatory-text data-i18n="descriptionHangman">Adivinhe a palavra escondida usando o teclado interativo.</p>
+                <div class="button-group">
+                    <a class="btn" href="html/index.html" data-i18n-play="gameHangman">Jogar Forca</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🐹</span> <span data-i18n="gameMole">Jogo da Marmota</span></h2>
+                <p data-explanatory-text data-i18n="descriptionMole">Acerte as marmotas quando aparecerem e faça pontos em 30 segundos.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-da-marmota.html" data-i18n-play="gameMole">Jogar Marmota</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">⭕</span> <span data-i18n="gameTicTacToe">Jogo da Velha</span></h2>
+                <p data-explanatory-text data-i18n="descriptionTicTacToe">Jogue contra outra pessoa ou desafie o computador.</p>
+                <div class="button-group">
+                    <a class="btn" href="forca.html" data-i18n-play="gameTicTacToe">Jogar Jogo da Velha</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">💰</span> <span data-i18n="gameBillion">Jogo do Bilhão</span></h2>
+                <p data-explanatory-text data-i18n="descriptionBillion">Responda perguntas, use ajudas e tente alcançar o prêmio máximo.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-do-bilhao.html" data-i18n-play="gameBillion">Jogar Bilhão</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">⚫</span> <span data-i18n="gameDots">Jogo do Pontinho</span></h2>
+                <p data-explanatory-text data-i18n="descriptionDots">Ligue os pontos, capture quadrados e vença a partida entre dois jogadores.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-pontinho.html" data-i18n-play="gameDots">Jogar Pontinho</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🥤</span> <span data-i18n="gameCups">Jogo dos Copos</span></h2>
+                <p data-explanatory-text data-i18n="descriptionCups">Acompanhe a moeda enquanto os copos se movem e descubra onde ela está.</p>
+                <div class="button-group">
+                    <a class="btn" href="jogo-dos-copos.html" data-i18n-play="gameCups">Jogar Jogo dos Copos</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">📏</span> <span data-i18n="gameMagnitude">Magnitude</span></h2>
+                <p data-explanatory-text data-i18n="descriptionMagnitude">Compare o tamanho de objetos famosos ajustando sua altura.</p>
+                <div class="button-group">
+                    <a class="btn" href="magnetude.html" data-i18n-play="gameMagnitude">Jogar Magnitude</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🧠</span> <span data-i18n="gameMemory">Mega Jogo da Memória Gourmet</span></h2>
+                <p data-explanatory-text data-i18n="descriptionMemory">Encontre pares de cartas temáticas de comida com dificuldade ajustável.</p>
+                <div class="button-group">
+                    <a class="btn" href="atualiza%C3%A7%C3%A3o%20quebrada/index.html" data-i18n-play="gameMemory">Jogar Memória</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🃏</span> <span data-i18n="gameSolitaire">Solitário</span></h2>
+                <p data-explanatory-text data-i18n="descriptionSolitaire">Organize as cartas neste clássico jogo de paciência.</p>
+                <div class="button-group">
+                    <a class="btn" href="gd/index.html" data-i18n-play="gameSolitaire">Jogar Solitário</a>
+                </div>
+            </article>
+
+            <article class="option-card">
+                <h2><span aria-hidden="true">🧱</span> <span data-i18n="gameTetris">Tetris</span></h2>
+                <p data-explanatory-text data-i18n="descriptionTetris">Encaixe as peças, complete linhas e supere sua pontuação.</p>
+                <div class="button-group">
+                    <a class="btn" href="tetris.html" data-i18n-play="gameTetris">Jogar Tetris</a>
+                </div>
+            </article>
+        </section>
+
+        <section class="info-panel" data-explanatory-text>
+            <div class="info-box">
+                <strong data-i18n="howWorks">Como funciona</strong>
+                <span data-i18n="howWorksText">Selecione um jogo e comece imediatamente no navegador.</span>
+            </div>
+            <div class="info-box">
+                <strong data-i18n="recommended">Recomendado</strong>
+                <span data-i18n="recommendedText">Escolha entre palavras, estratégia, perguntas e enigmas rápidos.</span>
+            </div>
+            <div class="info-box">
+                <strong data-i18n="browser">Tudo no navegador</strong>
+                <span data-i18n="browserText">Sem instalação: escolha um jogo e divirta-se.</span>
+            </div>
+        </section>
+
+        <footer>
+            <p data-explanatory-text data-i18n="footerMenu">Menu com 15 jogos em ordem alfabética.</p>
+            <p class="grand-score"><span data-i18n="totalScore">Pontuação total dos jogos</span>: <span data-score-grand-total>0</span></p>
+        </footer>
+    </main>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const playerNameKey = 'buuro-player-name';
+        const playerPhotoKey = 'buuro-player-photo-v1';
+        const menuJogos = document.getElementById('menu-container');
+        const tituloMenu = document.getElementById('menu-title');
+        const profileButton = document.getElementById('profile-button');
+        const profileMenu = document.getElementById('profile-menu');
+        const profileAvatar = document.getElementById('profile-avatar');
+        const profileName = document.getElementById('profile-name');
+        const profileDetails = document.getElementById('profile-details');
+        const viewProfileButton = document.getElementById('view-profile');
+        const viewChallengesButton = document.getElementById('view-challenges');
+        const viewAchievementsButton = document.getElementById('view-achievements');
+        const viewSettingsButton = document.getElementById('view-settings');
+        const challengeMenu = document.getElementById('challenge-menu');
+        const dailyChallengeList = document.getElementById('daily-challenge-list');
+        const weeklyChallengeList = document.getElementById('weekly-challenge-list');
+        const achievementMenu = document.getElementById('achievement-menu');
+        const settingsMenu = document.getElementById('settings-menu');
+        const achievementSummary = document.getElementById('achievement-summary');
+        const achievementList = document.getElementById('achievement-list');
+        const achievementToast = document.getElementById('achievement-toast');
+        const achievementToastName = document.getElementById('achievement-toast-name');
+        const achievementToastDescription = document.getElementById('achievement-toast-description');
+        const menuMusic = document.getElementById('menu-music');
+        const musicButton = document.getElementById('music-button');
+        const musicStatus = document.getElementById('music-status');
+        const translate = (key, values) => window.BuuroLanguage.translate(key, values);
+        const getAchievementName = (achievement) => (
+            achievement.nameKey
+                ? translate(achievement.nameKey)
+                : window.BuuroLanguage.translateAchievementName(achievement.name)
+        );
+        const achievementScoreGameKeys = {
+            'no Acerte o Famoso': 'gameCelebrity',
+            'no Tetris': 'gameTetris',
+            'no Jogo da Marmota': 'gameMole',
+            'em Capitais dos Países': 'gameCapitals',
+            'em Adivinhe a Bandeira': 'gameFlag',
+            'no Jogo do Pontinho': 'gameDots',
+            'no Jogo do Bilhão': 'gameBillion',
+            'no Magnitude': 'gameMagnitude',
+            'no Jogo dos Copos': 'gameCups',
+            'no jogo da Forca': 'gameHangman',
+            'na Forca': 'gameHangman',
+            'no Jogo da Velha': 'gameTicTacToe',
+            'nas Charadas do Sócrates': 'gameRiddles',
+            'no Solitário': 'gameSolitaire',
+            'no Mega Jogo da Memória': 'gameMemory'
+        };
+        const achievementDescriptionKeys = new Map([
+            ['Some pontos em qualquer jogo.', 'achievementDescriptionAnyGame'],
+            ['Conclua uma partida do Mega Jogo da Memória.', 'achievementDescriptionCompleteMemory'],
+            ['Encontre moedas no Jogo dos Copos.', 'achievementDescriptionFindCoins'],
+            ['Vença uma partida ou empate no Jogo do Pontinho.', 'achievementDescriptionWinOrDrawDots'],
+            ['Acerte um navio inimigo pela primeira vez.', 'achievementDescriptionFirstNavalHit'],
+            ['Afunde seu primeiro navio inimigo.', 'achievementDescriptionFirstNavalSunk'],
+            ['Vença sua primeira batalha naval.', 'achievementDescriptionFirstNavalVictory'],
+            ['Vença sem errar nenhum disparo.', 'achievementDescriptionPerfectNavalVictory'],
+            ['Vença sem nenhum navio seu ser atingido.', 'achievementDescriptionFlawlessNavalVictory'],
+            ['Vença cinco batalhas navais.', 'achievementDescriptionFiveNavalVictories'],
+            ['Ganhe pelo menos 100 pontos em todos os treze jogos.', 'achievementDescriptionScoreAllGames'],
+            ['Ganhe pontos em pelo menos três jogos diferentes.', 'achievementDescriptionScoreThreeGames'],
+            ['Ganhe pontos em pelo menos cinco jogos diferentes.', 'achievementDescriptionScoreFiveGames'],
+            ['Ganhe pontos em pelo menos seis jogos diferentes.', 'achievementDescriptionScoreSixGames'],
+            ['Encontre moedas e acumule 500 pontos no Jogo dos Copos.', 'achievementDescriptionCoinsAndScore'],
+            ['Some pelo menos 500 pontos em quatro jogos diferentes.', 'achievementDescriptionScoreFourGames'],
+            ['Ganhe pontos em todos os treze jogos.', 'achievementDescriptionExploreAllGames']
+        ]);
+        const getAchievementDescription = (achievement) => (
+            (() => {
+                if (achievement.descriptionKey) {
+                    return translate(achievement.descriptionKey, {
+                        score: achievement.threshold.toLocaleString(window.BuuroLanguage.current)
+                    });
+                }
+
+                const totalScore = achievement.description.match(/^Acumule ([\d.]+) pontos no total\.$/);
+                if (totalScore) {
+                    const score = Number(totalScore[1].replace(/\./g, ''));
+                    return translate('achievementTotalScoreMilestone', {
+                        score: score.toLocaleString(window.BuuroLanguage.current)
+                    });
+                }
+
+                const gameScore = achievement.description.match(/^Acumule ([\d.]+) pontos (.+)\.$/);
+                if (gameScore && achievementScoreGameKeys[gameScore[2]]) {
+                    const score = Number(gameScore[1].replace(/\./g, ''));
+                    return translate('achievementGameScoreMilestone', {
+                        score: score.toLocaleString(window.BuuroLanguage.current),
+                        game: translate(achievementScoreGameKeys[gameScore[2]])
+                    });
+                }
+
+                const gamePoints = {
+                    'Ganhe pontos no jogo da Forca.': 'gameHangman',
+                    'Ganhe pontos no Jogo da Velha.': 'gameTicTacToe',
+                    'Ganhe pontos no Jogo do Bilhão.': 'gameBillion',
+                    'Ganhe pontos nas Charadas do Sócrates.': 'gameRiddles',
+                    'Ganhe pontos no Solitário.': 'gameSolitaire',
+                    'Ganhe pontos no jogo Magnitude.': 'gameMagnitude',
+                    'Conclua uma partida e ganhe pontos no Acerte o Famoso.': 'gameCelebrity',
+                    'Ganhe pontos no Jogo da Marmota.': 'gameMole',
+                    'Ganhe pontos no jogo de Capitais.': 'gameCapitals',
+                    'Ganhe pontos no jogo Adivinhe a Bandeira.': 'gameFlag',
+                    'Some pontos jogando Tetris.': 'gameTetris'
+                }[achievement.description];
+                if (gamePoints) {
+                    return translate('achievementDescriptionEarnPoints', {
+                        game: translate(gamePoints)
+                    });
+                }
+
+                const descriptionKey = achievementDescriptionKeys.get(achievement.description);
+                return descriptionKey ? translate(descriptionKey) : achievement.description;
+            })()
+        );
+        const updateMenuTitle = () => {
+            tituloMenu.textContent = translate('greeting', {
+                name: playerName || translate('player')
+            });
+        };
+        let musicPlaybackError = false;
+        const params = new URLSearchParams(window.location.search);
+        const queryName = params.get('nome');
+        const returningToMenu = params.get('menu') === '1';
+        let playerName = (queryName || '').trim();
+        const scoreGames = ['forca', 'velha', 'bilhao', 'charadas', 'solitario', 'memoria', 'magnitude', 'famosos', 'copos', 'tetris', 'marmota', 'capitais', 'bandeiras', 'pontinho'];
+        const originalScoreGames = scoreGames.filter((game) => game !== 'famosos');
+        const unlockedBattleAchievementIds = (() => {
+            try {
+                const progress = JSON.parse(localStorage.getItem('buuro-battleship-progress-v1') || '{}');
+                const unlocked = progress && Array.isArray(progress.unlocked) ? progress.unlocked : [];
+                return new Set(unlocked.filter((id) => typeof id === 'string'));
+            } catch (error) {
+                console.error('Não foi possível carregar as conquistas da Batalha Naval.', error);
+                return new Set();
+            }
+        })();
+        const achievementDefinitions = [
+            { name: 'Primeiros pontos', description: 'Some pontos em qualquer jogo.', unlocked: (scores, total) => total > 0 },
+            { name: 'Colecionador', description: 'Acumule 500 pontos no total.', unlocked: (scores, total) => total >= 500 },
+            { name: 'Lenda do placar', description: 'Acumule 1.000 pontos no total.', unlocked: (scores, total) => total >= 1000 },
+            { name: 'Palavra descoberta', description: 'Ganhe pontos no jogo da Forca.', unlocked: (scores) => scores.forca > 0 },
+            { name: 'Estrategista', description: 'Ganhe pontos no Jogo da Velha.', unlocked: (scores) => scores.velha > 0 },
+            { name: 'Show do Bilhão', description: 'Ganhe pontos no Jogo do Bilhão.', unlocked: (scores) => scores.bilhao > 0 },
+            { name: 'Mestre das charadas', description: 'Ganhe pontos nas Charadas do Sócrates.', unlocked: (scores) => scores.charadas > 0 },
+            { name: 'Memória afiada', description: 'Conclua uma partida do Mega Jogo da Memória.', unlocked: (scores) => scores.memoria > 0 },
+            { name: 'Rei do Solitário', description: 'Ganhe pontos no Solitário.', unlocked: (scores) => scores.solitario > 0 },
+            { name: 'Olho de escala', description: 'Ganhe pontos no jogo Magnitude.', unlocked: (scores) => scores.magnitude > 0 },
+            { name: 'Primeiro rosto reconhecido', description: 'Conclua uma partida e ganhe pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos > 0 },
+            { name: 'Olho de celebridade', description: 'Acumule 100 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 100 },
+            { name: 'Caçador de famosos', description: 'Acumule 500 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 500 },
+            { name: 'Lenda dos famosos', description: 'Acumule 1.000 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 1000 },
+            { name: 'Memória fotográfica', description: 'Acumule 2.000 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 2000 },
+            { name: 'Especialista em retratos', description: 'Acumule 2.500 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 2500 },
+            { name: 'Estrela das celebridades', description: 'Acumule 5.000 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 5000 },
+            { name: 'Ícone das celebridades', description: 'Acumule 10.000 pontos no Acerte o Famoso.', unlocked: (scores) => scores.famosos >= 10000 },
+            { name: 'Mestre dos copos', description: 'Encontre moedas no Jogo dos Copos.', unlocked: (scores) => scores.copos > 0 },
+            { name: 'Construtor de linhas', description: 'Some pontos jogando Tetris.', unlocked: (scores) => scores.tetris > 0 },
+            { name: 'Empilhador', description: 'Acumule 500 pontos no Tetris.', unlocked: (scores) => scores.tetris >= 500 },
+            { name: 'Linha após linha', description: 'Acumule 1.000 pontos no Tetris.', unlocked: (scores) => scores.tetris >= 1000 },
+            { name: 'Mestre dos tetraminós', description: 'Acumule 2.500 pontos no Tetris.', unlocked: (scores) => scores.tetris >= 2500 },
+            { name: 'Tabuleiro lendário', description: 'Acumule 5.000 pontos no Tetris.', unlocked: (scores) => scores.tetris >= 5000 },
+            { name: 'Campeão de Tetris', description: 'Acumule 10.000 pontos no Tetris.', unlocked: (scores) => scores.tetris >= 10000 },
+            { name: 'Caçador de marmotas', description: 'Ganhe pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota > 0 },
+            { name: 'Reflexo afiado', description: 'Acumule 100 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 100 },
+            { name: 'Marmota veloz', description: 'Acumule 300 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 300 },
+            { name: 'Mirador perfeito', description: 'Acumule 500 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 500 },
+            { name: 'Pestinha dos buracos', description: 'Acumule 1.000 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 1000 },
+            { name: 'Rei das marmotas', description: 'Acumule 2.000 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 2000 },
+            { name: 'Lenda dos buracos', description: 'Acumule 5.000 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 5000 },
+            { name: 'Relâmpago marrom', description: 'Acumule 10.000 pontos no Jogo da Marmota.', unlocked: (scores) => scores.marmota >= 10000 },
+            { name: 'Turista curioso', description: 'Ganhe pontos no jogo de Capitais.', unlocked: (scores) => scores.capitais > 0 },
+            { name: 'Viajante geográfico', description: 'Acumule 500 pontos em Capitais dos Países.', unlocked: (scores) => scores.capitais >= 500 },
+            { name: 'Mapa aberto', description: 'Acumule 1.000 pontos em Capitais dos Países.', unlocked: (scores) => scores.capitais >= 1000 },
+            { name: 'Atlas vivo', description: 'Acumule 2.500 pontos em Capitais dos Países.', unlocked: (scores) => scores.capitais >= 2500 },
+            { name: 'Globo dourado', description: 'Acumule 3.000 pontos em Capitais dos Países.', unlocked: (scores) => scores.capitais >= 3000 },
+            { name: 'Bandeira avistada', description: 'Ganhe pontos no jogo Adivinhe a Bandeira.', unlocked: (scores) => scores.bandeiras > 0 },
+            { name: 'Colecionador de bandeiras', description: 'Acumule 500 pontos em Adivinhe a Bandeira.', unlocked: (scores) => scores.bandeiras >= 500 },
+            { name: 'Especialista em bandeiras', description: 'Acumule 1.000 pontos em Adivinhe a Bandeira.', unlocked: (scores) => scores.bandeiras >= 1000 },
+            { name: 'Verdadeiro vexilólogo', description: 'Acumule 2.500 pontos em Adivinhe a Bandeira.', unlocked: (scores) => scores.bandeiras >= 2500 },
+            { name: 'Mestre das bandeiras', description: 'Acumule 3.000 pontos em Adivinhe a Bandeira.', unlocked: (scores) => scores.bandeiras >= 3000 },
+            { name: 'Pontinho iniciante', description: 'Vença uma partida ou empate no Jogo do Pontinho.', unlocked: (scores) => scores.pontinho > 0 },
+            { name: 'Mestre dos quadrados', description: 'Acumule 1.600 pontos no Jogo do Pontinho.', unlocked: (scores) => scores.pontinho >= 1600 },
+            { name: 'Primeiro contato naval', description: 'Acerte um navio inimigo pela primeira vez.', unlocked: () => unlockedBattleAchievementIds.has('first-hit') },
+            { name: 'Caçador de navios', description: 'Afunde seu primeiro navio inimigo.', unlocked: () => unlockedBattleAchievementIds.has('first-sunk') },
+            { name: 'Almirante dos mares', description: 'Vença sua primeira batalha naval.', unlocked: () => unlockedBattleAchievementIds.has('first-victory') },
+            { name: 'Mira perfeita', description: 'Vença sem errar nenhum disparo.', unlocked: () => unlockedBattleAchievementIds.has('perfect-victory') },
+            { name: 'Frota intacta', description: 'Vença sem nenhum navio seu ser atingido.', unlocked: () => unlockedBattleAchievementIds.has('flawless-victory') },
+            { name: 'Lenda naval', description: 'Vença cinco batalhas navais.', unlocked: () => unlockedBattleAchievementIds.has('five-wins') },
+            { name: 'Treze jogos, uma lenda', description: 'Ganhe pelo menos 100 pontos em todos os treze jogos.', unlocked: (scores) => originalScoreGames.every((game) => scores[game] >= 100) },
+            { name: 'Trinca de jogos', description: 'Ganhe pontos em pelo menos três jogos diferentes.', unlocked: (scores) => scoreGames.filter((game) => scores[game] > 0).length >= 3 },
+            { name: 'Colecionador de modalidades', description: 'Ganhe pontos em pelo menos cinco jogos diferentes.', unlocked: (scores) => scoreGames.filter((game) => scores[game] > 0).length >= 5 },
+            { name: 'Maratonista', description: 'Acumule 2.500 pontos no total.', unlocked: (scores, total) => total >= 2500 },
+            { name: 'Pontuação lendária', description: 'Acumule 5.000 pontos no total.', unlocked: (scores, total) => total >= 5000 },
+            { name: 'Show de conhecimento', description: 'Acumule 1.000 pontos no Jogo do Bilhão.', unlocked: (scores) => scores.bilhao >= 1000 },
+            { name: 'Olho clínico', description: 'Acumule 1.000 pontos no Magnitude.', unlocked: (scores) => scores.magnitude >= 1000 },
+            { name: 'Moeda dourada', description: 'Encontre moedas e acumule 500 pontos no Jogo dos Copos.', unlocked: (scores) => scores.copos >= 500 },
+            { name: 'Persistência na Forca', description: 'Acumule 500 pontos no jogo da Forca.', unlocked: (scores) => scores.forca >= 500 },
+            { name: 'Força de vontade', description: 'Acumule 1.000 pontos na Forca.', unlocked: (scores) => scores.forca >= 1000 },
+            { name: 'Forca lendária', description: 'Acumule 2.500 pontos na Forca.', unlocked: (scores) => scores.forca >= 2500 },
+            { name: 'Mestre da Forca', description: 'Acumule 5.000 pontos na Forca.', unlocked: (scores) => scores.forca >= 5000 },
+            { name: 'Tática em alta', description: 'Acumule 1.000 pontos no Jogo da Velha.', unlocked: (scores) => scores.velha >= 1000 },
+            { name: 'Tabuleiro de ouro', description: 'Acumule 2.500 pontos no Jogo da Velha.', unlocked: (scores) => scores.velha >= 2500 },
+            { name: 'Grande estrategista', description: 'Acumule 5.000 pontos no Jogo da Velha.', unlocked: (scores) => scores.velha >= 5000 },
+            { name: 'Milionário em treino', description: 'Acumule 2.500 pontos no Jogo do Bilhão.', unlocked: (scores) => scores.bilhao >= 2500 },
+            { name: 'Quase bilionário', description: 'Acumule 5.000 pontos no Jogo do Bilhão.', unlocked: (scores) => scores.bilhao >= 5000 },
+            { name: 'Bilionário lendário', description: 'Acumule 10.000 pontos no Jogo do Bilhão.', unlocked: (scores) => scores.bilhao >= 10000 },
+            { name: 'Detetive de enigmas', description: 'Acumule 1.000 pontos nas Charadas do Sócrates.', unlocked: (scores) => scores.charadas >= 1000 },
+            { name: 'Sócrates aprendiz', description: 'Acumule 2.500 pontos nas Charadas do Sócrates.', unlocked: (scores) => scores.charadas >= 2500 },
+            { name: 'Filósofo mestre', description: 'Acumule 5.000 pontos nas Charadas do Sócrates.', unlocked: (scores) => scores.charadas >= 5000 },
+            { name: 'Cartas bem jogadas', description: 'Acumule 1.000 pontos no Solitário.', unlocked: (scores) => scores.solitario >= 1000 },
+            { name: 'Paciência de ouro', description: 'Acumule 2.500 pontos no Solitário.', unlocked: (scores) => scores.solitario >= 2500 },
+            { name: 'Ás do Solitário', description: 'Acumule 5.000 pontos no Solitário.', unlocked: (scores) => scores.solitario >= 5000 },
+            { name: 'Memória treinada', description: 'Acumule 1.000 pontos no Mega Jogo da Memória.', unlocked: (scores) => scores.memoria >= 1000 },
+            { name: 'Memória brilhante', description: 'Acumule 2.500 pontos no Mega Jogo da Memória.', unlocked: (scores) => scores.memoria >= 2500 },
+            { name: 'Memória lendária', description: 'Acumule 5.000 pontos no Mega Jogo da Memória.', unlocked: (scores) => scores.memoria >= 5000 },
+            { name: 'Escala avançada', description: 'Acumule 2.000 pontos no Magnitude.', unlocked: (scores) => scores.magnitude >= 2000 },
+            { name: 'Gigante das medidas', description: 'Acumule 5.000 pontos no Magnitude.', unlocked: (scores) => scores.magnitude >= 5000 },
+            { name: 'Mestre da magnitude', description: 'Acumule 10.000 pontos no Magnitude.', unlocked: (scores) => scores.magnitude >= 10000 },
+            { name: 'Olho nos copos', description: 'Acumule 1.000 pontos no Jogo dos Copos.', unlocked: (scores) => scores.copos >= 1000 },
+            { name: 'Caçador de moedas', description: 'Acumule 2.500 pontos no Jogo dos Copos.', unlocked: (scores) => scores.copos >= 2500 },
+            { name: 'Lenda dos copos', description: 'Acumule 5.000 pontos no Jogo dos Copos.', unlocked: (scores) => scores.copos >= 5000 },
+            { name: 'Mestre dos seis jogos', description: 'Ganhe pontos em pelo menos seis jogos diferentes.', unlocked: (scores) => scoreGames.filter((game) => scores[game] > 0).length >= 6 },
+            { name: 'Equilíbrio perfeito', description: 'Some pelo menos 500 pontos em quatro jogos diferentes.', unlocked: (scores) => scoreGames.filter((game) => scores[game] >= 500).length >= 4 },
+            { name: 'Placar de elite', description: 'Acumule 7.500 pontos no total.', unlocked: (scores, total) => total >= 7500 },
+            { name: 'Campeão absoluto', description: 'Acumule 10.000 pontos no total.', unlocked: (scores, total) => total >= 10000 },
+            { name: 'Lenda dos jogos', description: 'Acumule 15.000 pontos no total.', unlocked: (scores, total) => total >= 15000 },
+            { name: 'Imparável', description: 'Acumule 20.000 pontos no total.', unlocked: (scores, total) => total >= 20000 },
+            { name: 'Milionário dos jogos', nameKey: 'achievementMillionPoints', threshold: 1000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 1000000 },
+            { name: 'Duplo milhão', nameKey: 'achievementTwoMillionPoints', threshold: 2000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 2000000 },
+            { name: 'Dez milhões', nameKey: 'achievementTenMillionPoints', threshold: 10000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 10000000 },
+            { name: 'Cinquenta milhões', nameKey: 'achievementFiftyMillionPoints', threshold: 50000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 50000000 },
+            { name: 'Cem milhões', nameKey: 'achievementHundredMillionPoints', threshold: 100000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 100000000 },
+            { name: 'Meio bilhão', nameKey: 'achievementHalfBillionPoints', threshold: 500000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 500000000 },
+            { name: 'Bilionário', nameKey: 'achievementBillionPoints', threshold: 1000000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 1000000000 },
+            { name: 'Bilionário duplo', nameKey: 'achievementTwoBillionPoints', threshold: 2000000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 2000000000 },
+            { name: 'Lenda dos dez bilhões', nameKey: 'achievementTenBillionPoints', threshold: 10000000000, descriptionKey: 'achievementTotalScoreMilestone', unlocked: (scores, total) => total >= 10000000000 },
+            { name: 'Explorador', description: 'Ganhe pontos em todos os treze jogos.', unlocked: (scores) => originalScoreGames.every((game) => scores[game] > 0) }
+        ];
+        const achievementStorageKey = 'buuro-unlocked-achievements-v1';
+        const pendingAchievementNotifications = [];
+        let knownUnlockedAchievements = null;
+        let currentAchievementNotification = null;
+        let achievementToastTimer = null;
+
+        const achievementIcon = (name) => {
+            const lowerName = name.toLocaleLowerCase('pt-BR');
+            if (lowerName.includes('famos') || lowerName.includes('celebr') || lowerName.includes('retrato') || lowerName.includes('estrela') || lowerName.includes('ícone') || lowerName.includes('fotográfica') || lowerName.includes('rosto')) return '🌟';
+            if (lowerName.includes('naval') || lowerName.includes('navio') || lowerName.includes('frota') || lowerName.includes('almirante') || lowerName.includes('mares')) return '⚓';
+            if (lowerName.includes('mira')) return '🎯';
+            if (lowerName.includes('tetris') || lowerName.includes('tetramin') || lowerName.includes('linhas')) return '🧱';
+            if (lowerName.includes('marmota') || lowerName.includes('mirador') || lowerName.includes('buraco') || lowerName.includes('marrom')) return '⚡';
+            if (lowerName.includes('bandeira') || lowerName.includes('vexil')) return '🚩';
+            if (lowerName.includes('pontinho') || lowerName.includes('quadrado')) return '⚫';
+            if (lowerName.includes('capital') || lowerName.includes('turista') || lowerName.includes('viajante') || lowerName.includes('mapa') || lowerName.includes('atlas') || lowerName.includes('globo')) return '🌍';
+            if (lowerName.includes('forca') || lowerName.includes('palavra')) return '✍️';
+            if (lowerName.includes('velha') || lowerName.includes('estrateg') || lowerName.includes('tabuleiro')) return '⭕';
+            if (lowerName.includes('bilhão') || lowerName.includes('bilion') || lowerName.includes('milion')) return '💰';
+            if (lowerName.includes('charada') || lowerName.includes('sócrates') || lowerName.includes('filósofo') || lowerName.includes('detetive')) return '🧐';
+            if (lowerName.includes('memória')) return '🧠';
+            if (lowerName.includes('solitário') || lowerName.includes('cartas') || lowerName.includes('ás')) return '🃏';
+            if (lowerName.includes('magnitude') || lowerName.includes('escala') || lowerName.includes('medidas')) return '📏';
+            if (lowerName.includes('copos') || lowerName.includes('moeda')) return '🥤';
+            if (lowerName.includes('jogos') || lowerName.includes('modalidades') || lowerName.includes('explorador')) return '🎮';
+            if (lowerName.includes('pontos') || lowerName.includes('placar') || lowerName.includes('pontuação') || lowerName.includes('maraton')) return '⭐';
+            if (lowerName.includes('lend') || lowerName.includes('campeão') || lowerName.includes('reinado') || lowerName.includes('rei')) return '👑';
+            if (lowerName.includes('elite') || lowerName.includes('imparável') || lowerName.includes('persist') || lowerName.includes('perfeito')) return '🏅';
+            return '🏆';
+        };
+
+        try {
+            const savedAchievements = localStorage.getItem(achievementStorageKey);
+            if (savedAchievements !== null) {
+                const parsedAchievements = JSON.parse(savedAchievements);
+                if (Array.isArray(parsedAchievements)) {
+                    knownUnlockedAchievements = new Set(
+                        parsedAchievements.filter((name) => typeof name === 'string')
+                    );
+                }
+            }
+        } catch (error) {
+            console.error('Não foi possível carregar o histórico de conquistas.', error);
+        }
+
+        const showNextAchievementNotification = () => {
+            if (achievementToastTimer !== null || pendingAchievementNotifications.length === 0) return;
+            const achievement = pendingAchievementNotifications.shift();
+            currentAchievementNotification = achievement;
+            achievementToastName.textContent = getAchievementName(achievement);
+            achievementToastDescription.textContent = getAchievementDescription(achievement);
+            achievementToast.hidden = false;
+            const medal = document.getElementById('achievement-toast-medal');
+            if (medal) medal.textContent = achievementIcon(achievement.name);
+            window.requestAnimationFrame(() => achievementToast.classList.add('visible'));
+
+            achievementToastTimer = window.setTimeout(() => {
+                achievementToast.classList.remove('visible');
+                window.setTimeout(() => {
+                    achievementToast.hidden = true;
+                    currentAchievementNotification = null;
+                    achievementToastTimer = null;
+                    showNextAchievementNotification();
+                }, 240);
+            }, 5000);
+        };
+
+        const saveKnownAchievements = () => {
+            try {
+                localStorage.setItem(
+                    achievementStorageKey,
+                    JSON.stringify(Array.from(knownUnlockedAchievements))
+                );
+            } catch (error) {
+                console.error('Não foi possível salvar o histórico de conquistas.', error);
+            }
+        };
+
+        const readAchievementProgress = () => {
+            window.GameScoreCounter.render();
+            const scores = {};
+            scoreGames.forEach((game) => {
+                const scoreElement = profileDetails.querySelector(`[data-score-total="${game}"]`);
+                scores[game] = Number(scoreElement.textContent.replace(/[^\d]/g, '')) || 0;
+            });
+            const total = Number(
+                document.querySelector('[data-score-grand-total]').textContent.replace(/[^\d]/g, '')
+            ) || 0;
+            return { scores, total };
+        };
+
+        const checkForNewAchievements = () => {
+            const { scores, total } = readAchievementProgress();
+            const unlocked = achievementDefinitions.filter(({ unlocked: isUnlocked }) => isUnlocked(scores, total));
+            const currentUnlockedNames = new Set(unlocked.map(({ name }) => name));
+
+            if (knownUnlockedAchievements === null) {
+                knownUnlockedAchievements = currentUnlockedNames;
+            } else {
+                unlocked.forEach((achievement) => {
+                    if (!knownUnlockedAchievements.has(achievement.name)) {
+                        pendingAchievementNotifications.push(achievement);
+                    }
+                });
+                knownUnlockedAchievements = new Set([
+                    ...knownUnlockedAchievements,
+                    ...currentUnlockedNames
+                ]);
+                showNextAchievementNotification();
+            }
+            saveKnownAchievements();
+        };
+
+        let playerPhoto = '';
+
+        const setProfilePhoto = (photo) => {
+            playerPhoto = photo || '';
+            [profileButton, profileAvatar].forEach((avatar) => {
+                avatar.textContent = '';
+                avatar.classList.toggle('profile-photo', Boolean(playerPhoto));
+                if (playerPhoto) {
+                    const image = document.createElement('img');
+                    image.className = 'profile-photo-image';
+                    image.src = playerPhoto;
+                    image.alt = '';
+                    avatar.appendChild(image);
+                }
+            });
+
+            const removePhotoButton = document.getElementById('remove-photo');
+            removePhotoButton.hidden = !playerPhoto;
+        };
+
+        const updateProfileDisplay = () => {
+            const displayName = playerName || translate('player');
+            const initials = displayName
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part.charAt(0).toUpperCase())
+                .join('') || 'J';
+
+            profileName.textContent = displayName;
+            if (playerPhoto) {
+                setProfilePhoto(playerPhoto);
+            } else {
+                profileButton.textContent = initials;
+                profileAvatar.textContent = initials;
+                profileButton.classList.remove('profile-photo');
+                profileAvatar.classList.remove('profile-photo');
+            }
+        };
+
+        try {
+            if (playerName) {
+                localStorage.setItem(playerNameKey, playerName);
+            } else {
+                playerName = (localStorage.getItem(playerNameKey) || '').trim();
+            }
+            playerPhoto = localStorage.getItem(playerPhotoKey) || '';
+        } catch (error) {
+            playerName = playerName || '';
+        }
+
+        if (!playerName && !returningToMenu) window.location.replace('nome.html');
+        else {
+            updateMenuTitle();
+            menuJogos.hidden = false;
+        }
+
+        updateProfileDisplay();
+
+        const renderAchievements = () => {
+            const { scores, total: totalScore } = readAchievementProgress();
+            const unlockedCount = achievementDefinitions.filter(({ unlocked }) => unlocked(scores, totalScore)).length;
+
+            achievementSummary.textContent = translate('achievementCount', {
+                unlocked: unlockedCount,
+                total: achievementDefinitions.length
+            });
+            achievementList.textContent = '';
+            achievementDefinitions.forEach((achievement) => {
+                const { unlocked } = achievement;
+                const isUnlocked = unlocked(scores, totalScore);
+                const item = document.createElement('li');
+                item.className = `achievement-item${isUnlocked ? ' unlocked' : ''}`;
+
+                const icon = document.createElement('span');
+                icon.className = 'achievement-icon';
+                icon.setAttribute('aria-hidden', 'true');
+                icon.textContent = isUnlocked ? achievementIcon(achievement.name) : '🔒';
+
+                const title = document.createElement('strong');
+                title.className = 'achievement-name';
+                title.textContent = getAchievementName(achievement);
+
+                const details = document.createElement('span');
+                details.className = 'achievement-description';
+                details.textContent = getAchievementDescription(achievement);
+
+                const status = document.createElement('span');
+                status.className = 'achievement-status';
+                status.textContent = translate(isUnlocked ? 'achievementAvailable' : 'achievementLocked');
+
+                item.append(icon, title, details, status);
+                achievementList.appendChild(item);
+            });
+        };
+
+        const renderChallenges = () => {
+            const lists = {
+                daily: dailyChallengeList,
+                weekly: weeklyChallengeList
+            };
+            Object.values(lists).forEach((list) => {
+                list.textContent = '';
+            });
+
+            window.GameChallenges.getProgress().forEach((challenge) => {
+                const item = document.createElement('li');
+                item.className = `challenge-item${challenge.completed ? ' completed' : ''}`;
+
+                const title = document.createElement('strong');
+                title.className = 'challenge-name';
+                title.textContent = translate(challenge.titleKey);
+
+                const description = document.createElement('span');
+                description.className = 'challenge-description';
+                description.textContent = translate(challenge.descriptionKey);
+
+                const progress = document.createElement('span');
+                progress.className = 'challenge-progress';
+                progress.textContent = translate('challengeProgress', {
+                    progress: challenge.progress.toLocaleString(window.BuuroLanguage.current),
+                    target: challenge.target.toLocaleString(window.BuuroLanguage.current)
+                });
+
+                const reward = document.createElement('span');
+                reward.className = 'challenge-reward';
+                reward.textContent = translate('challengeReward', {
+                    points: challenge.reward.toLocaleString(window.BuuroLanguage.current)
+                });
+
+                const status = document.createElement('span');
+                status.className = 'challenge-status';
+                status.textContent = translate(challenge.completed ? 'challengeCompleted' : 'challengeInProgress');
+
+                item.append(title, description, progress, reward, status);
+                lists[challenge.period].appendChild(item);
+            });
+        };
+
+        checkForNewAchievements();
+
+        window.addEventListener('buuro-language-changed', () => {
+            updateMenuTitle();
+            updateProfileDisplay();
+            viewProfileButton.textContent = translate(
+                viewProfileButton.getAttribute('aria-expanded') === 'true' ? 'hideProfile' : 'viewProfile'
+            );
+            viewChallengesButton.textContent = translate(
+                viewChallengesButton.getAttribute('aria-expanded') === 'true' ? 'hideChallenges' : 'challenges'
+            );
+            viewAchievementsButton.textContent = translate(
+                viewAchievementsButton.getAttribute('aria-expanded') === 'true' ? 'hideAchievements' : 'achievements'
+            );
+            viewSettingsButton.textContent = translate(
+                viewSettingsButton.getAttribute('aria-expanded') === 'true' ? 'hideSettings' : 'settings'
+            );
+            musicButton.textContent = translate(menuMusic.paused ? 'musicPlay' : 'musicPause');
+            if (!menuMusic.paused) musicStatus.textContent = translate('musicPlaying');
+            else if (musicPlaybackError) musicStatus.textContent = translate('musicPlayError');
+            if (currentAchievementNotification) {
+                achievementToastName.textContent = getAchievementName(currentAchievementNotification);
+                achievementToastDescription.textContent = getAchievementDescription(currentAchievementNotification);
+            }
+            if (!achievementMenu.hidden) renderAchievements();
+            if (!challengeMenu.hidden) renderChallenges();
+        });
+
+        window.addEventListener('buuro-challenges-updated', () => {
+            if (!challengeMenu.hidden) renderChallenges();
+        });
+
+        musicButton.addEventListener('click', async () => {
+            if (!menuMusic.paused) {
+                menuMusic.pause();
+                return;
+            }
+
+            musicPlaybackError = false;
+            musicStatus.textContent = '';
+            try {
+                await menuMusic.play();
+            } catch (error) {
+                musicPlaybackError = true;
+                console.error('Não foi possível reproduzir a música do menu.', error);
+                musicStatus.textContent = translate('musicPlayError');
+            }
+        });
+
+        menuMusic.addEventListener('play', () => {
+            musicPlaybackError = false;
+            musicButton.textContent = translate('musicPause');
+            musicButton.setAttribute('aria-pressed', 'true');
+            musicStatus.textContent = translate('musicPlaying');
+        });
+
+        menuMusic.addEventListener('pause', () => {
+            musicButton.textContent = translate('musicPlay');
+            musicButton.setAttribute('aria-pressed', 'false');
+            if (!musicPlaybackError) musicStatus.textContent = translate('musicPaused');
+        });
+
+        menuMusic.addEventListener('error', () => {
+            musicPlaybackError = true;
+            musicStatus.textContent = translate('musicLoadError');
+        });
+
+        profileButton.addEventListener('click', () => {
+            const isOpen = profileMenu.classList.toggle('open');
+            profileButton.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!profileMenu.contains(event.target) && !profileButton.contains(event.target)) {
+                profileMenu.classList.remove('open');
+                profileButton.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        viewProfileButton.addEventListener('click', () => {
+            const isExpanded = viewProfileButton.getAttribute('aria-expanded') !== 'true';
+            viewProfileButton.setAttribute('aria-expanded', String(isExpanded));
+            viewProfileButton.textContent = translate(isExpanded ? 'hideProfile' : 'viewProfile');
+            profileDetails.hidden = !isExpanded;
+            if (isExpanded) {
+                challengeMenu.hidden = true;
+                viewChallengesButton.setAttribute('aria-expanded', 'false');
+                viewChallengesButton.textContent = translate('challenges');
+                achievementMenu.hidden = true;
+                viewAchievementsButton.setAttribute('aria-expanded', 'false');
+                viewAchievementsButton.textContent = translate('achievements');
+                settingsMenu.hidden = true;
+                viewSettingsButton.setAttribute('aria-expanded', 'false');
+                viewSettingsButton.textContent = translate('settings');
+                window.GameScoreCounter.render();
+            }
+        });
+
+        viewChallengesButton.addEventListener('click', () => {
+            const isExpanded = viewChallengesButton.getAttribute('aria-expanded') !== 'true';
+            viewChallengesButton.setAttribute('aria-expanded', String(isExpanded));
+            viewChallengesButton.textContent = translate(isExpanded ? 'hideChallenges' : 'challenges');
+            challengeMenu.hidden = !isExpanded;
+            if (isExpanded) {
+                profileDetails.hidden = true;
+                viewProfileButton.setAttribute('aria-expanded', 'false');
+                viewProfileButton.textContent = translate('viewProfile');
+                achievementMenu.hidden = true;
+                viewAchievementsButton.setAttribute('aria-expanded', 'false');
+                viewAchievementsButton.textContent = translate('achievements');
+                settingsMenu.hidden = true;
+                viewSettingsButton.setAttribute('aria-expanded', 'false');
+                viewSettingsButton.textContent = translate('settings');
+                renderChallenges();
+            }
+        });
+
+        viewAchievementsButton.addEventListener('click', () => {
+            const isExpanded = viewAchievementsButton.getAttribute('aria-expanded') !== 'true';
+            viewAchievementsButton.setAttribute('aria-expanded', String(isExpanded));
+            viewAchievementsButton.textContent = translate(isExpanded ? 'hideAchievements' : 'achievements');
+            achievementMenu.hidden = !isExpanded;
+            if (isExpanded) {
+                profileDetails.hidden = true;
+                viewProfileButton.setAttribute('aria-expanded', 'false');
+                viewProfileButton.textContent = translate('viewProfile');
+                challengeMenu.hidden = true;
+                viewChallengesButton.setAttribute('aria-expanded', 'false');
+                viewChallengesButton.textContent = translate('challenges');
+                settingsMenu.hidden = true;
+                viewSettingsButton.setAttribute('aria-expanded', 'false');
+                viewSettingsButton.textContent = translate('settings');
+                checkForNewAchievements();
+                renderAchievements();
+            }
+        });
+
+        viewSettingsButton.addEventListener('click', () => {
+            const isExpanded = viewSettingsButton.getAttribute('aria-expanded') !== 'true';
+            viewSettingsButton.setAttribute('aria-expanded', String(isExpanded));
+            viewSettingsButton.textContent = translate(isExpanded ? 'hideSettings' : 'settings');
+            settingsMenu.hidden = !isExpanded;
+            if (isExpanded) {
+                profileDetails.hidden = true;
+                viewProfileButton.setAttribute('aria-expanded', 'false');
+                viewProfileButton.textContent = translate('viewProfile');
+                challengeMenu.hidden = true;
+                viewChallengesButton.setAttribute('aria-expanded', 'false');
+                viewChallengesButton.textContent = translate('challenges');
+                achievementMenu.hidden = true;
+                viewAchievementsButton.setAttribute('aria-expanded', 'false');
+                viewAchievementsButton.textContent = translate('achievements');
+            }
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === playerNameKey) {
+                playerName = (event.newValue || '').trim();
+                updateMenuTitle();
+                updateProfileDisplay();
+            }
+            if (
+                event.key === 'buuro-game-scores-by-profile-v1'
+                || event.key === playerNameKey
+                || event.key === null
+            ) {
+                checkForNewAchievements();
+                if (!achievementMenu.hidden) renderAchievements();
+                if (!challengeMenu.hidden) renderChallenges();
+            }
+        });
+
+        window.addEventListener('pageshow', checkForNewAchievements);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkForNewAchievements();
+        });
+
+        const photoInput = document.getElementById('photo-input');
+
+        document.getElementById('change-photo').addEventListener('click', () => {
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', () => {
+            const file = photoInput.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert(translate('imageOnly'));
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const image = new Image();
+                image.onload = () => {
+                    const size = 512;
+                    const scale = Math.min(1, size / Math.max(image.width, image.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(image.width * scale);
+                    canvas.height = Math.round(image.height * scale);
+                    const context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                    const photo = canvas.toDataURL('image/jpeg', 0.82);
+                    try {
+                        localStorage.setItem(playerPhotoKey, photo);
+                        setProfilePhoto(photo);
+                    } catch (error) {
+                        alert(translate('photoSaveError'));
+                    }
+                };
+                image.onerror = () => alert(translate('photoOpenError'));
+                image.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+            photoInput.value = '';
+        });
+
+        document.getElementById('remove-photo').addEventListener('click', () => {
+            try {
+                localStorage.removeItem(playerPhotoKey);
+            } catch (error) {}
+            setProfilePhoto('');
+            updateProfileDisplay();
+        });
+
+        document.getElementById('change-name').addEventListener('click', () => {
+            window.location.href = 'nome.html';
+        });
+
+        document.getElementById('logout-profile').addEventListener('click', () => {
+            try {
+                localStorage.removeItem(playerNameKey);
+                localStorage.removeItem(playerPhotoKey);
+            } catch (error) {}
+            window.location.href = 'nome.html';
+        });
+    </script>
+</body>
+</html>

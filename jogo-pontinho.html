@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo do Pontinho</title>
+  <script src="game-language.js" defer></script>
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: #101827;
+      --p1: #e87932;
+      --p1-bg: rgba(232, 121, 50, 0.24);
+      --p2: #287a67;
+      --p2-bg: rgba(40, 122, 103, 0.24);
+      --line: #687184;
+      --line-hover: #f5c542;
+      --dot: #ffe07a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #000;
+      color: #fff;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .game {
+      width: min(720px, 100%);
+      border: 2px solid rgba(245,197,66,0.72);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(40,122,103,0.96), rgba(18,54,70,0.97) 58%, rgba(232,121,50,0.88));
+      box-shadow: 0 24px 70px rgba(245,197,66,0.12);
+      padding: clamp(20px, 5vw, 40px);
+      text-align: center;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .topbar a {
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 0.86rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .music-button {
+      min-height: 38px;
+      border: 1px solid rgba(255,224,122,0.42);
+      border-radius: 6px;
+      background: rgba(255,224,122,0.16);
+      color: #fff;
+      padding: 0 10px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .mode-select {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .mode-select select {
+      max-width: 150px;
+      min-height: 38px;
+      border: 1px solid rgba(255,224,122,0.42);
+      border-radius: 6px;
+      background: #101827;
+      color: #fff;
+      padding: 0 8px;
+      font: inherit;
+    }
+
+    .music-status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      color: #fff;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .player {
+      min-height: 74px;
+      display: grid;
+      place-items: center;
+      gap: 3px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      font-family: Arial, sans-serif;
+      transition: 180ms ease;
+    }
+
+    .player h2 {
+      margin: 0;
+      font-size: 0.86rem;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .score {
+      font-size: 1.7rem;
+      font-weight: 900;
+    }
+
+    .player.p1.active {
+      border-color: var(--p1);
+      background: var(--p1-bg);
+      box-shadow: 0 0 18px rgba(232,121,50,0.28);
+    }
+
+    .player.p2.active {
+      border-color: #64c5a8;
+      background: var(--p2-bg);
+      box-shadow: 0 0 18px rgba(40,122,103,0.28);
+    }
+
+    .player.p1 h2, .player.p1 .score { color: #ffb26d; }
+    .player.p2 h2, .player.p2 .score { color: #98dfc9; }
+
+    #status {
+      min-height: 24px;
+      margin-bottom: 14px;
+      color: #ffe07a;
+      font-family: Arial, sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .board {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px;
+      border: 1px solid rgba(255,224,122,0.32);
+      border-radius: 8px;
+      background: rgba(5,7,13,0.42);
+      display: grid;
+      grid-template-columns: repeat(4, 14px 54px) 14px;
+      grid-template-rows: repeat(4, 14px 54px) 14px;
+      justify-content: center;
+      overflow-x: auto;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--dot);
+      box-shadow: 0 0 8px rgba(255,224,122,0.38);
+      z-index: 2;
+    }
+
+    .line-h {
+      height: 8px;
+      align-self: center;
+      border-radius: 4px;
+      background: var(--line);
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .line-v {
+      width: 8px;
+      justify-self: center;
+      border-radius: 4px;
+      background: var(--line);
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .line-h:not(.taken):hover,
+    .line-v:not(.taken):hover {
+      background: var(--line-hover);
+      transform: scale(1.14);
+    }
+
+    .line-h.taken,
+    .line-v.taken { cursor: default; }
+    .line-h.p1, .line-v.p1 { background: var(--p1); box-shadow: 0 0 8px rgba(232,121,50,0.5); }
+    .line-h.p2, .line-v.p2 { background: #64c5a8; box-shadow: 0 0 8px rgba(100,197,168,0.5); }
+
+    .box {
+      display: grid;
+      place-items: center;
+      margin: 4px;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 900;
+      transition: 220ms ease;
+    }
+
+    .box.p1 { background: var(--p1-bg); color: #ffb26d; }
+    .box.p2 { background: var(--p2-bg); color: #98dfc9; }
+
+    .restart {
+      min-height: 46px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 22px;
+      background: linear-gradient(90deg, #f5c542, #e87932);
+      color: #172033;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .game { min-height: calc(100vh - 24px); padding: 18px 12px; }
+      .board { padding: 10px 6px; grid-template-columns: repeat(4, 12px 42px) 12px; grid-template-rows: repeat(4, 12px 42px) 12px; }
+      .dot { width: 12px; height: 12px; }
+      .line-h { height: 7px; }
+      .line-v { width: 7px; }
+      .box { font-size: 0.92rem; margin: 3px; }
+    }
+  </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+  <main class="game">
+    <div class="topbar">
+      <a href="index.html?menu=1#menu-container">← Voltar ao menu</a>
+      <button class="music-button" id="music-button" type="button" aria-pressed="false">Tocar trilha</button>
+      <label class="mode-select" for="game-mode">
+        Modo:
+        <select id="game-mode">
+          <option value="players">2 jogadores</option>
+          <option value="bot">Contra o bot</option>
+        </select>
+      </label>
+    </div>
+
+    <h1>Jogo do Pontinho</h1>
+
+    <div class="scoreboard">
+      <div class="player p1 active" id="card-p1">
+        <h2>Jogador 1</h2>
+        <div class="score" id="score-p1">0</div>
+      </div>
+      <div class="player p2" id="card-p2">
+        <h2 id="name-p2">Jogador 2</h2>
+        <div class="score" id="score-p2">0</div>
+      </div>
+    </div>
+
+    <div id="status">Vez do Jogador 1</div>
+    <div class="board" id="board"></div>
+    <button class="restart" type="button" onclick="initGame()">Reiniciar jogo</button>
+  </main>
+
+  <audio id="background-music" src="006.%20Uwa!!%20So%20Temperate%E2%99%AB%20(UNDERTALE%20Soundtrack)%20-%20Toby%20Fox%20-%20Toby%20Fox.mp3" loop preload="none"></audio>
+  <p class="music-status" id="music-status" role="status" aria-live="polite"></p>
+
+  <script src="score-counter.js"></script>
+  <script>
+    const SIZE = 4;
+    let currentPlayer = 1;
+    let scores = { 1: 0, 2: 0 };
+    let hLines = [];
+    let vLines = [];
+    let boxes = [];
+    let scoreRegistered = false;
+
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const gameModeEl = document.getElementById('game-mode');
+    const backgroundMusic = document.getElementById('background-music');
+    const musicButton = document.getElementById('music-button');
+    const musicStatus = document.getElementById('music-status');
+    let botTimeout = null;
+
+    function isBotMode() {
+      return gameModeEl.value === 'bot';
+    }
+
+    function playerName(player) {
+      return player === 2 && isBotMode() ? 'Bot' : `Jogador ${player}`;
+    }
+
+    gameModeEl.addEventListener('change', initGame);
+
+    musicButton.addEventListener('click', async () => {
+      if (!backgroundMusic.paused) {
+        backgroundMusic.pause();
+        return;
+      }
+
+      try {
+        await backgroundMusic.play();
+        musicButton.textContent = 'Pausar trilha';
+        musicButton.setAttribute('aria-pressed', 'true');
+        musicStatus.textContent = 'Trilha sonora em reprodução.';
+      } catch (error) {
+        musicStatus.textContent = 'Não foi possível reproduzir a trilha sonora.';
+      }
+    });
+
+    backgroundMusic.addEventListener('pause', () => {
+      if (backgroundMusic.currentTime > 0) {
+        musicButton.textContent = 'Tocar trilha';
+        musicButton.setAttribute('aria-pressed', 'false');
+        musicStatus.textContent = 'Trilha sonora pausada.';
+      }
+    });
+
+    function initGame() {
+      clearTimeout(botTimeout);
+      botTimeout = null;
+      currentPlayer = 1;
+      scores = { 1: 0, 2: 0 };
+      hLines = Array.from({ length: SIZE + 1 }, () => Array(SIZE).fill(0));
+      vLines = Array.from({ length: SIZE }, () => Array(SIZE + 1).fill(0));
+      boxes = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+      scoreRegistered = false;
+      updateUI();
+      renderBoard();
+    }
+
+    function renderBoard() {
+      boardEl.textContent = '';
+
+      for (let r = 0; r < SIZE * 2 + 1; r++) {
+        for (let c = 0; c < SIZE * 2 + 1; c++) {
+          const cell = document.createElement('div');
+
+          if (r % 2 === 0 && c % 2 === 0) {
+            cell.className = 'dot';
+          } else if (r % 2 === 0 && c % 2 !== 0) {
+            const row = r / 2;
+            const col = (c - 1) / 2;
+            cell.className = 'line-h';
+            if (hLines[row][col]) {
+              cell.classList.add('taken', `p${hLines[row][col]}`);
+            } else {
+              cell.onclick = () => handleMove('h', row, col);
+            }
+          } else if (r % 2 !== 0 && c % 2 === 0) {
+            const row = (r - 1) / 2;
+            const col = c / 2;
+            cell.className = 'line-v';
+            if (vLines[row][col]) {
+              cell.classList.add('taken', `p${vLines[row][col]}`);
+            } else {
+              cell.onclick = () => handleMove('v', row, col);
+            }
+          } else {
+            const row = (r - 1) / 2;
+            const col = (c - 1) / 2;
+            cell.className = 'box';
+            if (boxes[row][col]) {
+              cell.classList.add(`p${boxes[row][col]}`);
+              cell.textContent = `J${boxes[row][col]}`;
+            }
+          }
+
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function handleMove(type, r, c) {
+      if (isBotMode() && currentPlayer === 2) return;
+      applyMove(type, r, c);
+    }
+
+    function applyMove(type, r, c) {
+      if (type === 'h') {
+        if (hLines[r][c]) return;
+        hLines[r][c] = currentPlayer;
+      } else {
+        if (vLines[r][c]) return;
+        vLines[r][c] = currentPlayer;
+      }
+
+      const scored = checkBoxes();
+      if (!scored) currentPlayer = currentPlayer === 1 ? 2 : 1;
+
+      updateUI();
+      renderBoard();
+      if (isBotMode() && currentPlayer === 2 && !isGameOver()) {
+        scheduleBotMove();
+      }
+    }
+
+    function isGameOver() {
+      return scores[1] + scores[2] === SIZE * SIZE;
+    }
+
+    function scheduleBotMove() {
+      statusEl.textContent = 'Bot pensando...';
+      botTimeout = setTimeout(() => {
+        botTimeout = null;
+        const move = chooseBotMove();
+        if (move) applyMove(move.type, move.row, move.col);
+      }, 450);
+    }
+
+    function chooseBotMove() {
+      const moves = [];
+      for (let row = 0; row <= SIZE; row++) {
+        for (let col = 0; col < SIZE; col++) {
+          if (!hLines[row][col]) moves.push({ type: 'h', row, col });
+        }
+      }
+      for (let row = 0; row < SIZE; row++) {
+        for (let col = 0; col <= SIZE; col++) {
+          if (!vLines[row][col]) moves.push({ type: 'v', row, col });
+        }
+      }
+
+      const winningMoves = moves.filter(move => adjacentBoxes(move).some(
+        ([row, col]) => countBoxLines(row, col) === 3
+      ));
+      if (winningMoves.length) return randomMove(winningMoves);
+
+      const safeMoves = moves.filter(move => adjacentBoxes(move).every(
+        ([row, col]) => countBoxLines(row, col) < 2
+      ));
+      return randomMove(safeMoves.length ? safeMoves : moves);
+    }
+
+    function adjacentBoxes(move) {
+      const boxesToCheck = move.type === 'h'
+        ? [[move.row - 1, move.col], [move.row, move.col]]
+        : [[move.row, move.col - 1], [move.row, move.col]];
+      return boxesToCheck.filter(([row, col]) =>
+        row >= 0 && row < SIZE && col >= 0 && col < SIZE && boxes[row][col] === 0
+      );
+    }
+
+    function countBoxLines(row, col) {
+      return Number(hLines[row][col] !== 0)
+        + Number(hLines[row + 1][col] !== 0)
+        + Number(vLines[row][col] !== 0)
+        + Number(vLines[row][col + 1] !== 0);
+    }
+
+    function randomMove(moves) {
+      if (!moves.length) return null;
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    function checkBoxes() {
+      let madePoint = false;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (boxes[r][c] === 0) {
+            const top = hLines[r][c] !== 0;
+            const bottom = hLines[r + 1][c] !== 0;
+            const left = vLines[r][c] !== 0;
+            const right = vLines[r][c + 1] !== 0;
+
+            if (top && bottom && left && right) {
+              boxes[r][c] = currentPlayer;
+              scores[currentPlayer]++;
+              madePoint = true;
+            }
+          }
+        }
+      }
+
+      return madePoint;
+    }
+
+    function registerWinnerScore() {
+      if (scoreRegistered) return;
+      const winnerScore = Math.max(scores[1], scores[2]);
+      if (window.GameScoreCounter && winnerScore > 0) {
+        window.GameScoreCounter.add('pontinho', winnerScore * 100);
+      }
+      scoreRegistered = true;
+    }
+
+    function updateUI() {
+      document.getElementById('score-p1').textContent = scores[1];
+      document.getElementById('score-p2').textContent = scores[2];
+      document.getElementById('name-p2').textContent = playerName(2);
+      document.getElementById('card-p1').classList.toggle('active', currentPlayer === 1);
+      document.getElementById('card-p2').classList.toggle('active', currentPlayer === 2);
+
+      const totalBoxes = SIZE * SIZE;
+      if (scores[1] + scores[2] === totalBoxes) {
+        if (scores[1] > scores[2]) {
+          statusEl.textContent = `${playerName(1)} venceu!`;
+          registerWinnerScore();
+        } else if (scores[2] > scores[1]) {
+          statusEl.textContent = `${playerName(2)} venceu!`;
+          registerWinnerScore();
+        } else {
+          statusEl.textContent = 'Empate!';
+          if (window.GameScoreCounter && !scoreRegistered) {
+            window.GameScoreCounter.add('pontinho', 800);
+            scoreRegistered = true;
+          }
+        }
+      } else {
+        statusEl.textContent = `Vez de ${playerName(currentPlayer)}`;
+      }
+    }
+
+    initGame();
+  </script>
+</body>
+</html>

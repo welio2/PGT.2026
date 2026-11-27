@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo do Bilhão</title>
+    <script src="game-language.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top, #f5c542, #f07b3f 45%, #2c3e50 100%);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1080px;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+            backdrop-filter: blur(16px);
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .hero p {
+            color: rgba(255,255,255,0.88);
+            line-height: 1.8;
+            margin-bottom: 0;
+        }
+
+        .question-card {
+            margin-top: 20px;
+        }
+
+        .question-title {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            letter-spacing: 0.4px;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-button {
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+            text-align: left;
+        }
+
+        .option-button:hover:not(.disabled) {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .option-button.correct {
+            background: #2ecc71;
+            border-color: #27ae60;
+        }
+
+        .option-button.wrong {
+            background: #e74c3c;
+            border-color: #c0392b;
+        }
+
+        .option-button.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 125px;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            background: #34495e;
+            color: #fff;
+            font-size: 0.98rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #2c3e50;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sidebar {
+            display: grid;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 20px;
+            padding: 22px;
+        }
+
+        .panel h2 {
+            font-size: 1.25rem;
+            margin-bottom: 14px;
+        }
+
+        .panel ul {
+            list-style: none;
+            display: grid;
+            gap: 12px;
+        }
+
+        .panel li {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+        }
+
+        .panel li.active {
+            background: rgba(46, 204, 113, 0.18);
+            border-color: #2ecc71;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .rules {
+            margin-top: 20px;
+            display: grid;
+            gap: 10px;
+            font-size: 0.95rem;
+            line-height: 1.75;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .status-block {
+            flex: 1;
+            min-width: 130px;
+            background: rgba(0,0,0,0.18);
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .status-block strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #f5c542;
+        }
+
+        .status-block span {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .result-banner {
+            display: none;
+            margin-top: 20px;
+            border-radius: 18px;
+            padding: 18px 22px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            color: #fff;
+        }
+
+        .result-banner.show {
+            display: block;
+        }
+
+        .result-banner.success {
+            background: rgba(46, 204, 113, 0.18);
+            border: 1px solid #2ecc71;
+        }
+
+        .result-banner.failure {
+            background: rgba(231, 76, 60, 0.18);
+            border: 1px solid #e74c3c;
+        }
+
+        @media (max-width: 980px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="hero">
+                <h1 id="page-title">Jogo do Bilhão</h1>
+                <p id="page-description" data-explanatory-text>Responda 10 perguntas sorteadas de um banco de 15, use lifelines e tente chegar ao prêmio máximo.</p>
+            </div>
+
+            <div class="status-row">
+                <div class="status-block">
+                    <strong id="step-label">Pergunta</strong>
+                    <span id="current-step">1 / 10</span>
+                </div>
+                <div class="status-block">
+                    <strong id="current-prize-label">Prêmio atual</strong>
+                    <span id="prize-display">R$ 500</span>
+                </div>
+                <div class="status-block">
+                    <strong id="guaranteed-prize-label">Prêmio Garantido</strong>
+                    <span id="safe-prize">R$ 0</span>
+                </div>
+                <div class="status-block">
+                    <strong id="score-label">Pontos acumulados</strong>
+                    <span data-score-total="bilhao">0</span>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div class="question-title" id="question-text">Clique em continuar para começar.</div>
+                <div class="options" id="options"></div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="start-btn">Começar Quiz</button>
+                <button class="btn" id="fifty-btn">50/50</button>
+                <button class="btn" id="skip-btn">Pular</button>
+                <button class="btn" id="audience-btn">Plateia</button>
+                <button class="btn" id="menu-btn">Voltar ao Menu</button>
+            </div>
+
+            <div class="result-banner" id="result-banner"></div>
+            <div class="footer" id="message-text">Use as lifelines com sabedoria: só 1x cada.</div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <h2 id="prizes-label">Prêmios</h2>
+                <ul id="prize-list">
+                    <li class="active"><span>1</span><strong>R$ 500</strong></li>
+                    <li><span>2</span><strong>R$ 1.000</strong></li>
+                    <li><span>3</span><strong>R$ 5.000</strong></li>
+                    <li><span>4</span><strong>R$ 10.000</strong></li>
+                    <li><span>5</span><strong>R$ 25.000</strong></li>
+                    <li><span>6</span><strong>R$ 50.000</strong></li>
+                    <li><span>7</span><strong>R$ 100.000</strong></li>
+                    <li><span>8</span><strong>R$ 200.000</strong></li>
+                    <li><span>9</span><strong>R$ 500.000</strong></li>
+                    <li><span>10</span><strong>R$ 1.000.000</strong></li>
+                </ul>
+            </div>
+
+            <div class="panel">
+                <h2 id="lifelines-label">Lifelines</h2>
+                <ul>
+                    <li id="lifeline-fifty"><span data-lifeline-name>50/50</span><span>Disponível</span></li>
+                    <li id="lifeline-skip"><span data-lifeline-name>Pular</span><span>Disponível</span></li>
+                    <li id="lifeline-audience"><span data-lifeline-name>Plateia</span><span>Disponível</span></li>
+                </ul>
+            </div>
+
+            <div class="panel rules" data-explanatory-text>
+                <h2 id="rules-label">Regras rápidas</h2>
+                <p id="rule-one">Responda cada pergunta para subir na escada de prêmios. Uma resposta errada encerra o quiz.</p>
+                <p id="rule-two">Use 50/50 para eliminar duas opções erradas, Pular para avançar sem perder e Plateia para ver probabilidades.</p>
+                <p id="rule-three">O prêmio final é desbloqueado ao acertar todas as perguntas.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const localeOrder = ['pt-BR', 'en', 'es', 'de', 'ja', 'ru', 'fr', 'it'];
+        const question = (id, answer, text, options) => ({
+            id,
+            answer,
+            text,
+            options: options.map(([optionId, ...labels]) => ({ id: optionId, labels }))
+        });
+        const questions = [
+            question('browser-language', 'javascript', [
+                'Qual linguagem é usada para criar scripts no navegador?',
+                'Which language is used to write scripts in a web browser?',
+                '¿Qué lenguaje se usa para crear scripts en el navegador?',
+                'Welche Sprache wird verwendet, um Skripte im Browser zu schreiben?',
+                'ブラウザーでスクリプトを書くために使われる言語は何ですか？',
+                'Какой язык используют для написания сценариев в браузере?',
+                'Quel langage sert à écrire des scripts dans un navigateur ?',
+                'Quale linguaggio si usa per scrivere script nel browser?'
+            ], [
+                ['python', 'Python', 'Python', 'Python', 'Python', 'Python', 'Python', 'Python', 'Python'],
+                ['cpp', 'C++', 'C++', 'C++', 'C++', 'C++', 'C++', 'C++', 'C++'],
+                ['javascript', 'JavaScript', 'JavaScript', 'JavaScript', 'JavaScript', 'JavaScript', 'JavaScript', 'JavaScript', 'JavaScript'],
+                ['ruby', 'Ruby', 'Ruby', 'Ruby', 'Ruby', 'Ruby', 'Ruby', 'Ruby', 'Ruby']
+            ]),
+            question('city-of-light', 'paris', [
+                'Qual cidade é conhecida como a Cidade Luz?',
+                'Which city is known as the City of Light?',
+                '¿Qué ciudad es conocida como la Ciudad de la Luz?',
+                'Welche Stadt ist als Stadt des Lichts bekannt?',
+                '「光の都」として知られる都市はどこですか？',
+                'Какой город называют городом света?',
+                'Quelle ville est surnommée la Ville Lumière ?',
+                'Quale città è conosciuta come la Città della Luce?'
+            ], [
+                ['rome', 'Roma', 'Rome', 'Roma', 'Rom', 'ローマ', 'Рим', 'Rome', 'Roma'],
+                ['new-york', 'Nova York', 'New York', 'Nueva York', 'New York', 'ニューヨーク', 'Нью-Йорк', 'New York', 'New York'],
+                ['london', 'Londres', 'London', 'Londres', 'London', 'ロンドン', 'Лондон', 'Londres', 'Londra'],
+                ['paris', 'Paris', 'Paris', 'París', 'Paris', 'パリ', 'Париж', 'Paris', 'Parigi']
+            ]),
+            question('red-planet', 'mars', [
+                'Qual planeta é chamado de Planeta Vermelho?',
+                'Which planet is known as the Red Planet?',
+                '¿Qué planeta se conoce como el Planeta Rojo?',
+                'Welcher Planet wird Roter Planet genannt?',
+                '赤い惑星と呼ばれるのはどの惑星ですか？',
+                'Какую планету называют Красной планетой?',
+                'Quelle planète est surnommée la planète rouge ?',
+                'Quale pianeta è chiamato Pianeta Rosso?'
+            ], [
+                ['venus', 'Vênus', 'Venus', 'Venus', 'Venus', '金星', 'Венера', 'Vénus', 'Venere'],
+                ['mars', 'Marte', 'Mars', 'Marte', 'Mars', '火星', 'Марс', 'Mars', 'Marte'],
+                ['jupiter', 'Júpiter', 'Jupiter', 'Júpiter', 'Jupiter', '木星', 'Юпитер', 'Jupiter', 'Giove'],
+                ['saturn', 'Saturno', 'Saturn', 'Saturno', 'Saturn', '土星', 'Сатурн', 'Saturne', 'Saturno']
+            ]),
+            question('don-quixote-author', 'cervantes', [
+                'Quem escreveu "Dom Quixote"?',
+                'Who wrote "Don Quixote"?',
+                '¿Quién escribió "Don Quijote"?',
+                'Wer schrieb „Don Quijote“?',
+                '『ドン・キホーテ』を書いたのは誰ですか？',
+                'Кто написал «Дон Кихота»?',
+                'Qui a écrit « Don Quichotte » ?',
+                'Chi ha scritto il «Don Chisciotte»?'
+            ], [
+                ['cervantes', 'Miguel de Cervantes', 'Miguel de Cervantes', 'Miguel de Cervantes', 'Miguel de Cervantes', 'ミゲル・デ・セルバンテス', 'Мигель де Сервантес', 'Miguel de Cervantes', 'Miguel de Cervantes'],
+                ['pessoa', 'Fernando Pessoa', 'Fernando Pessoa', 'Fernando Pessoa', 'Fernando Pessoa', 'フェルナンド・ペソア', 'Фернанду Пессоа', 'Fernando Pessoa', 'Fernando Pessoa'],
+                ['assis', 'Machado de Assis', 'Machado de Assis', 'Machado de Assis', 'Machado de Assis', 'マシャード・デ・アシス', 'Машаду ди Ассис', 'Machado de Assis', 'Machado de Assis'],
+                ['amado', 'Jorge Amado', 'Jorge Amado', 'Jorge Amado', 'Jorge Amado', 'ジョルジェ・アマード', 'Жоржи Амаду', 'Jorge Amado', 'Jorge Amado']
+            ]),
+            question('water-formula', 'h2o', [
+                'Qual é a fórmula química da água?',
+                'What is the chemical formula for water?',
+                '¿Cuál es la fórmula química del agua?',
+                'Wie lautet die chemische Formel von Wasser?',
+                '水の化学式は何ですか？',
+                'Какова химическая формула воды?',
+                'Quelle est la formule chimique de l’eau ?',
+                'Qual è la formula chimica dell’acqua?'
+            ], [
+                ['h2o', 'H₂O', 'H₂O', 'H₂O', 'H₂O', 'H₂O', 'H₂O', 'H₂O', 'H₂O'],
+                ['o2', 'O₂', 'O₂', 'O₂', 'O₂', 'O₂', 'O₂', 'O₂', 'O₂'],
+                ['co2', 'CO₂', 'CO₂', 'CO₂', 'CO₂', 'CO₂', 'CO₂', 'CO₂', 'CO₂'],
+                ['nacl', 'NaCl', 'NaCl', 'NaCl', 'NaCl', 'NaCl', 'NaCl', 'NaCl', 'NaCl']
+            ]),
+            question('wind-instrument', 'flute', [
+                'Qual destes é um instrumento de sopro?',
+                'Which of these is a wind instrument?',
+                '¿Cuál de estos es un instrumento de viento?',
+                'Welches dieser Instrumente ist ein Blasinstrument?',
+                '次のうち、管楽器はどれですか？',
+                'Какой из этих инструментов является духовым?',
+                'Lequel de ces instruments est un instrument à vent ?',
+                'Quale di questi è uno strumento a fiato?'
+            ], [
+                ['violin', 'Violino', 'Violin', 'Violín', 'Violine', 'バイオリン', 'Скрипка', 'Violon', 'Violino'],
+                ['flute', 'Flauta', 'Flute', 'Flauta', 'Flöte', 'Флейта', 'Флейта', 'Flûte', 'Flauto'],
+                ['piano', 'Piano', 'Piano', 'Piano', 'Klavier', 'ピアノ', 'Пианино', 'Piano', 'Pianoforte'],
+                ['guitar', 'Guitarra', 'Guitar', 'Guitarra', 'Gitarre', 'ギター', 'Гитара', 'Guitare', 'Chitarra']
+            ]),
+            question('samba-origin', 'brazil', [
+                'Em que país nasceu o samba?',
+                'In which country did samba originate?',
+                '¿En qué país nació la samba?',
+                'In welchem Land entstand der Samba?',
+                'サンバはどの国で生まれましたか？',
+                'В какой стране зародилась самба?',
+                'Dans quel pays la samba est-elle née ?',
+                'In quale paese è nata la samba?'
+            ], [
+                ['brazil', 'Brasil', 'Brazil', 'Brasil', 'Brasilien', 'ブラジル', 'Бразилия', 'Brésil', 'Brasile'],
+                ['argentina', 'Argentina', 'Argentina', 'Argentina', 'Argentinien', 'アルゼンチン', 'Аргентина', 'Argentine', 'Argentina'],
+                ['portugal', 'Portugal', 'Portugal', 'Portugal', 'Portugal', 'ポルトガル', 'Португалия', 'Portugal', 'Portogallo'],
+                ['cuba', 'Cuba', 'Cuba', 'Cuba', 'Kuba', 'キューバ', 'Куба', 'Cuba', 'Cuba']
+            ]),
+            question('king-of-jungle', 'lion', [
+                'Qual animal é conhecido como rei da selva?',
+                'Which animal is known as the king of the jungle?',
+                '¿Qué animal es conocido como el rey de la selva?',
+                'Welches Tier gilt als König des Dschungels?',
+                'ジャングルの王として知られる動物は何ですか？',
+                'Какое животное называют царём джунглей?',
+                'Quel animal est connu comme le roi de la jungle ?',
+                'Quale animale è noto come il re della giungla?'
+            ], [
+                ['tiger', 'Tigre', 'Tiger', 'Tigre', 'Tiger', 'Тигр', 'Тигр', 'Tigre', 'Tigre'],
+                ['lion', 'Leão', 'Lion', 'León', 'Löwe', 'ライオン', 'Лев', 'Lion', 'Leone'],
+                ['elephant', 'Elefante', 'Elephant', 'Elefante', 'Elefant', 'ゾウ', 'Слон', 'Éléphant', 'Elefante'],
+                ['cheetah', 'Guepardo', 'Cheetah', 'Guepardo', 'Gepard', 'チーター', 'Гепард', 'Guépard', 'Ghepardo']
+            ]),
+            question('largest-ocean', 'pacific', [
+                'Qual oceano é o maior do mundo?',
+                'Which is the largest ocean in the world?',
+                '¿Cuál es el océano más grande del mundo?',
+                'Welcher ist der größte Ozean der Welt?',
+                '世界最大の海洋はどれですか？',
+                'Какой океан является самым большим в мире?',
+                'Quel est le plus grand océan du monde ?',
+                'Qual è l’oceano più grande del mondo?'
+            ], [
+                ['indian', 'Índico', 'Indian', 'Índico', 'Indischer', 'インド洋', 'Индийский', 'Indien', 'Indiano'],
+                ['atlantic', 'Atlântico', 'Atlantic', 'Atlántico', 'Atlantischer', '大西洋', 'Атлантический', 'Atlantique', 'Atlantico'],
+                ['pacific', 'Pacífico', 'Pacific', 'Pacífico', 'Pazifischer', '太平洋', 'Тихий', 'Pacifique', 'Pacifico'],
+                ['arctic', 'Ártico', 'Arctic', 'Ártico', 'Arktischer', '北極海', 'Северный Ледовитый', 'Arctique', 'Artico']
+            ]),
+            question('et-director', 'spielberg', [
+                'Qual diretor dirigiu "E.T. — O Extraterrestre"?',
+                'Who directed "E.T. the Extra-Terrestrial"?',
+                '¿Quién dirigió "E.T., el extraterrestre"?',
+                'Wer führte bei „E.T. – Der Außerirdische“ Regie?',
+                '『E.T.』を監督したのは誰ですか？',
+                'Кто снял фильм «Инопланетянин»?',
+                'Qui a réalisé « E.T. l’extra-terrestre » ?',
+                'Chi ha diretto «E.T. l’extra-terrestre»?'
+            ], [
+                ['spielberg', 'Steven Spielberg', 'Steven Spielberg', 'Steven Spielberg', 'Steven Spielberg', 'スティーヴン・スピルバーグ', 'Стивен Спилберг', 'Steven Spielberg', 'Steven Spielberg'],
+                ['cameron', 'James Cameron', 'James Cameron', 'James Cameron', 'James Cameron', 'ジェームズ・キャメロン', 'Джеймс Кэмерон', 'James Cameron', 'James Cameron'],
+                ['tarantino', 'Quentin Tarantino', 'Quentin Tarantino', 'Quentin Tarantino', 'Quentin Tarantino', 'クエンティン・タランティーノ', 'Квентин Тарантино', 'Quentin Tarantino', 'Quentin Tarantino'],
+                ['nolan', 'Christopher Nolan', 'Christopher Nolan', 'Christopher Nolan', 'Christopher Nolan', 'クリストファー・ノーラン', 'Кристофер Нолан', 'Christopher Nolan', 'Christopher Nolan']
+            ]),
+            question('largest-country', 'russia', [
+                'Qual é o maior país do mundo em área territorial?',
+                'Which is the largest country in the world by area?',
+                '¿Cuál es el país más grande del mundo por superficie?',
+                'Welches ist flächenmäßig das größte Land der Welt?',
+                '面積が世界最大の国はどこですか？',
+                'Какая страна является крупнейшей в мире по площади?',
+                'Quel est le plus grand pays du monde en superficie ?',
+                'Qual è il paese più esteso del mondo?'
+            ], [
+                ['canada', 'Canadá', 'Canada', 'Canadá', 'Kanada', 'カナダ', 'Канада', 'Canada', 'Canada'],
+                ['china', 'China', 'China', 'China', 'China', '中国', 'Китай', 'Chine', 'Cina'],
+                ['united-states', 'Estados Unidos', 'United States', 'Estados Unidos', 'Vereinigte Staaten', 'アメリカ合衆国', 'США', 'États-Unis', 'Stati Uniti'],
+                ['russia', 'Rússia', 'Russia', 'Rusia', 'Russland', 'ロシア', 'Россия', 'Russie', 'Russia']
+            ]),
+            question('gold-symbol', 'gold', [
+                'Qual elemento tem o símbolo "Au"?',
+                'Which element has the symbol "Au"?',
+                '¿Qué elemento tiene el símbolo "Au"?',
+                'Welches Element hat das Symbol „Au“?',
+                '元素記号「Au」の元素は何ですか？',
+                'Какой элемент обозначается символом Au?',
+                'Quel élément porte le symbole « Au » ?',
+                'Quale elemento ha il simbolo «Au»?'
+            ], [
+                ['silver', 'Prata', 'Silver', 'Plata', 'Silber', '銀', 'Серебро', 'Argent', 'Argento'],
+                ['gold', 'Ouro', 'Gold', 'Oro', 'Gold', '金', 'Золото', 'Or', 'Oro'],
+                ['water', 'Água', 'Water', 'Agua', 'Wasser', '水', 'Вода', 'Eau', 'Acqua'],
+                ['manganese', 'Manganês', 'Manganese', 'Manganeso', 'Mangan', 'マンガン', 'Марганец', 'Manganèse', 'Manganese']
+            ]),
+            question('mona-lisa-painter', 'da-vinci', [
+                'Quem pintou a Mona Lisa?',
+                'Who painted the Mona Lisa?',
+                '¿Quién pintó la Mona Lisa?',
+                'Wer malte die Mona Lisa?',
+                'モナ・リザを描いたのは誰ですか？',
+                'Кто написал «Мону Лизу»?',
+                'Qui a peint la Joconde ?',
+                'Chi ha dipinto la Gioconda?'
+            ], [
+                ['da-vinci', 'Leonardo da Vinci', 'Leonardo da Vinci', 'Leonardo da Vinci', 'Leonardo da Vinci', 'レオナルド・ダ・ヴィンチ', 'Леонардо да Винчи', 'Léonard de Vinci', 'Leonardo da Vinci'],
+                ['picasso', 'Pablo Picasso', 'Pablo Picasso', 'Pablo Picasso', 'Pablo Picasso', 'パブロ・ピカソ', 'Пабло Пикассо', 'Pablo Picasso', 'Pablo Picasso'],
+                ['van-gogh', 'Vincent van Gogh', 'Vincent van Gogh', 'Vincent van Gogh', 'Vincent van Gogh', 'フィンセント・ファン・ゴッホ', 'Винсент ван Гог', 'Vincent van Gogh', 'Vincent van Gogh'],
+                ['monet', 'Claude Monet', 'Claude Monet', 'Claude Monet', 'Claude Monet', 'クロード・モネ', 'Клод Моне', 'Claude Monet', 'Claude Monet']
+            ]),
+            question('popular-sport', 'football', [
+                'Qual é o esporte mais popular do mundo?',
+                'What is the most popular sport in the world?',
+                '¿Cuál es el deporte más popular del mundo?',
+                'Was ist die beliebteste Sportart der Welt?',
+                '世界で最も人気のあるスポーツは何ですか？',
+                'Какой вид спорта самый популярный в мире?',
+                'Quel est le sport le plus populaire au monde ?',
+                'Qual è lo sport più popolare al mondo?'
+            ], [
+                ['basketball', 'Basquete', 'Basketball', 'Baloncesto', 'Basketball', 'バスケットボール', 'Баскетбол', 'Basket-ball', 'Pallacanestro'],
+                ['tennis', 'Tênis', 'Tennis', 'Tenis', 'Tennis', 'テニス', 'Теннис', 'Tennis', 'Tennis'],
+                ['football', 'Futebol', 'Football (soccer)', 'Fútbol', 'Fußball', 'サッカー', 'Футбол', 'Football', 'Calcio'],
+                ['cricket', 'Críquete', 'Cricket', 'Críquet', 'Cricket', 'クリケット', 'Крикет', 'Cricket', 'Cricket']
+            ]),
+            question('temperature-instrument', 'thermometer', [
+                'Qual instrumento mede a temperatura?',
+                'Which instrument measures temperature?',
+                '¿Qué instrumento mide la temperatura?',
+                'Welches Instrument misst die Temperatur?',
+                '温度を測る器具はどれですか？',
+                'Какой прибор измеряет температуру?',
+                'Quel instrument mesure la température ?',
+                'Quale strumento misura la temperatura?'
+            ], [
+                ['barometer', 'Barômetro', 'Barometer', 'Barómetro', 'Barometer', '気圧計', 'Барометр', 'Baromètre', 'Barometro'],
+                ['thermometer', 'Termômetro', 'Thermometer', 'Termómetro', 'Thermometer', '温度計', 'Термометр', 'Thermomètre', 'Termometro'],
+                ['hygrometer', 'Higrômetro', 'Hygrometer', 'Higrómetro', 'Hygrometer', '湿度計', 'Гигрометр', 'Hygromètre', 'Igrometro'],
+                ['anemometer', 'Anemômetro', 'Anemometer', 'Anemómetro', 'Anemometer', '風速計', 'Анемометр', 'Anémomètre', 'Anemometro']
+            ]),
+            question('smallest-planet', 'mercury', [
+                'Qual é o menor planeta do sistema solar?',
+                'What is the smallest planet in the Solar System?',
+                '¿Cuál es el planeta más pequeño del sistema solar?',
+                'Welcher ist der kleinste Planet im Sonnensystem?',
+                '太陽系で最も小さい惑星は何ですか？',
+                'Какая планета самая маленькая в Солнечной системе?',
+                'Quelle est la plus petite planète du Système solaire ?',
+                'Qual è il pianeta più piccolo del Sistema solare?'
+            ], [
+                ['mercury', 'Mercúrio', 'Mercury', 'Mercurio', 'Merkur', '水星', 'Меркурий', 'Mercure', 'Mercurio'],
+                ['mars', 'Marte', 'Mars', 'Marte', 'Mars', '火星', 'Марс', 'Mars', 'Marte'],
+                ['venus', 'Vênus', 'Venus', 'Venus', 'Venus', '金星', 'Венера', 'Vénus', 'Venere'],
+                ['earth', 'Terra', 'Earth', 'Tierra', 'Erde', '地球', 'Земля', 'Terre', 'Terra']
+            ]),
+            question('atmosphere-gas', 'nitrogen', [
+                'Qual gás é o maior componente da atmosfera da Terra?',
+                'Which gas is the largest component of Earth’s atmosphere?',
+                '¿Qué gas es el componente principal de la atmósfera terrestre?',
+                'Welches Gas ist der Hauptbestandteil der Erdatmosphäre?',
+                '地球の大気の主成分である気体は何ですか？',
+                'Какой газ составляет основную часть атмосферы Земли?',
+                'Quel gaz est le principal constituant de l’atmosphère terrestre ?',
+                'Quale gas è il componente principale dell’atmosfera terrestre?'
+            ], [
+                ['nitrogen', 'Nitrogênio', 'Nitrogen', 'Nitrógeno', 'Stickstoff', '窒素', 'Азот', 'Azote', 'Azoto'],
+                ['oxygen', 'Oxigênio', 'Oxygen', 'Oxígeno', 'Sauerstoff', '酸素', 'Кислород', 'Oxygène', 'Ossigeno'],
+                ['carbon-dioxide', 'Dióxido de carbono', 'Carbon dioxide', 'Dióxido de carbono', 'Kohlenstoffdioxid', '二酸化炭素', 'Углекислый газ', 'Dioxyde de carbone', 'Anidride carbonica'],
+                ['helium', 'Hélio', 'Helium', 'Helio', 'Helium', 'ヘリウム', 'Гелий', 'Hélium', 'Elio']
+            ]),
+            question('html-expansion', 'html', [
+                'O que significa a sigla HTML?',
+                'What does the acronym HTML stand for?',
+                '¿Qué significan las siglas HTML?',
+                'Wofür steht die Abkürzung HTML?',
+                'HTMLは何の略ですか？',
+                'Как расшифровывается аббревиатура HTML?',
+                'Que signifie le sigle HTML ?',
+                'Che cosa significa la sigla HTML?'
+            ], [
+                ['html', 'Linguagem de Marcação de Hipertexto', 'HyperText Markup Language', 'Lenguaje de marcado de hipertexto', 'Hypertext-Auszeichnungssprache', 'ハイパーテキスト・マークアップ言語', 'Язык гипертекстовой разметки', 'Langage de balisage hypertexte', 'Linguaggio di markup ipertestuale'],
+                ['hightext-machine', 'Linguagem de Máquina de Texto Avançado', 'HighText Machine Language', 'Lenguaje de máquina de texto avanzado', 'HighText-Maschinensprache', 'ハイテキスト機械語', 'Машинный язык HighText', 'Langage machine HighText', 'Linguaggio macchina HighText'],
+                ['hyperlink-text', 'Linguagem de Marcação de Texto com Hiperlinks', 'Hyperlink Text Markup Language', 'Lenguaje de marcado de texto con hipervínculos', 'Hyperlink-Text-Auszeichnungssprache', 'ハイパーリンク・テキスト・マークアップ言語', 'Язык разметки текста с гиперссылками', 'Langage de balisage du texte avec liens hypertextes', 'Linguaggio di markup del testo con collegamenti ipertestuali'],
+                ['modern-language', 'Linguagem Moderna de Hipertexto', 'HyperText Modern Language', 'Lenguaje moderno de hipertexto', 'Moderne Hypertext-Sprache', '最新ハイパーテキスト言語', 'Современный язык гипертекста', 'Langage hypertexte moderne', 'Linguaggio ipertestuale moderno']
+            ]),
+            question('milk-producing-animal', 'cow', [
+                'Qual animal produz leite para alimentar seus filhotes?',
+                'Which animal produces milk to feed its young?',
+                '¿Qué animal produce leche para alimentar a sus crías?',
+                'Welches Tier produziert Milch, um seine Jungen zu ernähren?',
+                '子どもに飲ませるために乳を作る動物は何ですか？',
+                'Какое животное вырабатывает молоко для кормления детёнышей?',
+                'Quel animal produit du lait pour nourrir ses petits ?',
+                'Quale animale produce latte per nutrire i propri piccoli?'
+            ], [
+                ['cow', 'Vaca', 'Cow', 'Vaca', 'Kuh', 'ウシ', 'Корова', 'Vache', 'Mucca'],
+                ['duck', 'Pato', 'Duck', 'Pato', 'Ente', 'アヒル', 'Утка', 'Canard', 'Anatra'],
+                ['chicken', 'Galinha', 'Chicken', 'Gallina', 'Huhn', 'ニワトリ', 'Курица', 'Poule', 'Gallina'],
+                ['snake', 'Cobra', 'Snake', 'Serpiente', 'Schlange', 'ヘビ', 'Змея', 'Serpent', 'Serpente']
+            ]),
+            question('ferromagnetic-metal', 'iron', [
+                'Qual metal é considerado ferromagnético?',
+                'Which metal is considered ferromagnetic?',
+                '¿Qué metal se considera ferromagnético?',
+                'Welches Metall gilt als ferromagnetisch?',
+                '強磁性体とされる金属はどれですか？',
+                'Какой металл считается ферромагнитным?',
+                'Quel métal est considéré comme ferromagnétique ?',
+                'Quale metallo è considerato ferromagnetico?'
+            ], [
+                ['iron', 'Ferro', 'Iron', 'Hierro', 'Eisen', '鉄', 'Железо', 'Fer', 'Ferro'],
+                ['silver', 'Prata', 'Silver', 'Plata', 'Silber', '銀', 'Серебро', 'Argent', 'Argento'],
+                ['gold', 'Ouro', 'Gold', 'Oro', 'Gold', '金', 'Золото', 'Or', 'Oro'],
+                ['copper', 'Cobre', 'Copper', 'Cobre', 'Kupfer', '銅', 'Медь', 'Cuivre', 'Rame']
+            ]),
+            question('atmospheric-pressure-tool', 'barometer', [
+                'Qual instrumento é usado para medir a pressão atmosférica?',
+                'Which instrument is used to measure atmospheric pressure?',
+                '¿Qué instrumento se usa para medir la presión atmosférica?',
+                'Welches Instrument misst den Luftdruck?',
+                '大気圧を測る器具はどれですか？',
+                'Какой прибор используют для измерения атмосферного давления?',
+                'Quel instrument sert à mesurer la pression atmosphérique ?',
+                'Quale strumento si usa per misurare la pressione atmosferica?'
+            ], [
+                ['barometer', 'Barômetro', 'Barometer', 'Barómetro', 'Barometer', '気圧計', 'Барометр', 'Baromètre', 'Barometro'],
+                ['thermometer', 'Termômetro', 'Thermometer', 'Termómetro', 'Thermometer', '温度計', 'Термометр', 'Thermomètre', 'Termometro'],
+                ['anemometer', 'Anemômetro', 'Anemometer', 'Anemómetro', 'Anemometer', '風速計', 'Анемометр', 'Anémomètre', 'Anemometro'],
+                ['hygrometer', 'Higrômetro', 'Hygrometer', 'Higrómetro', 'Hygrometer', '湿度計', 'Гигрометр', 'Hygromètre', 'Igrometro']
+            ]),
+            question('seconds-in-minute', '60', [
+                'Quantos segundos existem em um minuto?',
+                'How many seconds are there in a minute?',
+                '¿Cuántos segundos hay en un minuto?',
+                'Wie viele Sekunden hat eine Minute?',
+                '1分は何秒ですか？',
+                'Сколько секунд в одной минуте?',
+                'Combien y a-t-il de secondes dans une minute ?',
+                'Quanti secondi ci sono in un minuto?'
+            ], [
+                ['30', '30', '30', '30', '30', '30', '30', '30', '30'],
+                ['45', '45', '45', '45', '45', '45', '45', '45', '45'],
+                ['60', '60', '60', '60', '60', '60', '60', '60', '60'],
+                ['75', '75', '75', '75', '75', '75', '75', '75', '75']
+            ]),
+            question('fastest-land-animal', 'cheetah', [
+                'Qual animal é o mais rápido em terra?',
+                'Which is the fastest land animal?',
+                '¿Cuál es el animal terrestre más rápido?',
+                'Welches ist das schnellste Landtier?',
+                '陸上で最も速い動物は何ですか？',
+                'Какое животное самое быстрое на суше?',
+                'Quel est l’animal terrestre le plus rapide ?',
+                'Qual è l’animale terrestre più veloce?'
+            ], [
+                ['lion', 'Leão', 'Lion', 'León', 'Löwe', 'ライオン', 'Лев', 'Lion', 'Leone'],
+                ['tiger', 'Tigre', 'Tiger', 'Tigre', 'Tiger', 'トラ', 'Тигр', 'Tigre', 'Tigre'],
+                ['cheetah', 'Guepardo', 'Cheetah', 'Guepardo', 'Gepard', 'チーター', 'Гепард', 'Guépard', 'Ghepardo'],
+                ['antelope', 'Antílope', 'Antelope', 'Antílope', 'Antilope', 'レイヨウ', 'Антилопа', 'Antilope', 'Antilope']
+            ]),
+            question('number-of-continents', '7', [
+                'Quantos continentes existem no mundo?',
+                'How many continents are there in the world?',
+                '¿Cuántos continentes hay en el mundo?',
+                'Wie viele Kontinente gibt es auf der Welt?',
+                '世界には大陸がいくつありますか？',
+                'Сколько континентов в мире?',
+                'Combien y a-t-il de continents dans le monde ?',
+                'Quanti continenti ci sono nel mondo?'
+            ], [
+                ['5', '5', '5', '5', '5', '5', '5', '5', '5'],
+                ['6', '6', '6', '6', '6', '6', '6', '6', '6'],
+                ['7', '7', '7', '7', '7', '7', '7', '7', '7'],
+                ['8', '8', '8', '8', '8', '8', '8', '8', '8']
+            ]),
+            question('rainbow-colors', '7', [
+                'Quantas cores existem no arco-íris tradicional?',
+                'How many colors are traditionally said to be in a rainbow?',
+                '¿Cuántos colores tiene tradicionalmente el arcoíris?',
+                'Wie viele Farben hat ein Regenbogen traditionell?',
+                '伝統的に虹は何色とされていますか？',
+                'Сколько цветов традиционно выделяют в радуге?',
+                'Combien de couleurs compte traditionnellement l’arc-en-ciel ?',
+                'Quanti colori ha tradizionalmente l’arcobaleno?'
+            ], [
+                ['5', '5', '5', '5', '5', '5', '5', '5', '5'],
+                ['6', '6', '6', '6', '6', '6', '6', '6', '6'],
+                ['7', '7', '7', '7', '7', '7', '7', '7', '7'],
+                ['8', '8', '8', '8', '8', '8', '8', '8', '8']
+            ]),
+            question('japan-capital', 'tokyo', [
+                'Qual é a capital do Japão?',
+                'What is the capital of Japan?',
+                '¿Cuál es la capital de Japón?',
+                'Was ist die Hauptstadt Japans?',
+                '日本の首都はどこですか？',
+                'Какова столица Японии?',
+                'Quelle est la capitale du Japon ?',
+                'Qual è la capitale del Giappone?'
+            ], [
+                ['seoul', 'Seul', 'Seoul', 'Seúl', 'Seoul', 'ソウル', 'Сеул', 'Séoul', 'Seul'],
+                ['beijing', 'Pequim', 'Beijing', 'Pekín', 'Peking', '北京', 'Пекин', 'Pékin', 'Pechino'],
+                ['tokyo', 'Tóquio', 'Tokyo', 'Tokio', 'Tokio', '東京', 'Токио', 'Tokyo', 'Tokyo'],
+                ['bangkok', 'Bangkok', 'Bangkok', 'Bangkok', 'Bangkok', 'バンコク', 'Бангкок', 'Bangkok', 'Bangkok']
+            ]),
+            question('guacamole-fruit', 'avocado', [
+                'Qual fruta é usada para fazer guacamole?',
+                'Which fruit is used to make guacamole?',
+                '¿Qué fruta se usa para preparar guacamole?',
+                'Welche Frucht wird für Guacamole verwendet?',
+                'ワカモレに使われる果物は何ですか？',
+                'Какой фрукт используют для приготовления гуакамоле?',
+                'Quel fruit utilise-t-on pour préparer le guacamole ?',
+                'Quale frutto si usa per preparare il guacamole?'
+            ], [
+                ['banana', 'Banana', 'Banana', 'Plátano', 'Banane', 'バナナ', 'Банан', 'Banane', 'Banana'],
+                ['avocado', 'Abacate', 'Avocado', 'Aguacate', 'Avocado', 'Авокадо', 'Авокадо', 'Avocat', 'Avocado'],
+                ['tomato', 'Tomate', 'Tomato', 'Tomate', 'Tomate', 'Помидор', 'Томат', 'Tomate', 'Pomodoro'],
+                ['lemon', 'Limão', 'Lemon', 'Limón', 'Zitrone', 'レモン', 'Лимон', 'Citron', 'Limone']
+            ]),
+            question('antivirus-program', 'antivirus', [
+                'Como se chama um programa que protege o computador contra vírus?',
+                'What do you call a program that protects a computer from viruses?',
+                '¿Cómo se llama un programa que protege el ordenador de los virus?',
+                'Wie nennt man ein Programm, das einen Computer vor Viren schützt?',
+                'コンピューターをウイルスから守るプログラムを何と呼びますか？',
+                'Как называется программа для защиты компьютера от вирусов?',
+                'Comment appelle-t-on un programme qui protège un ordinateur contre les virus ?',
+                'Come si chiama un programma che protegge il computer dai virus?'
+            ], [
+                ['editor', 'Editor', 'Editor', 'Editor', 'Editor', 'エディター', 'Редактор', 'Éditeur', 'Editor'],
+                ['antivirus', 'Antivírus', 'Antivirus', 'Antivirus', 'Antivirusprogramm', 'Антивирус', 'Антивирус', 'Antivirus', 'Antivirus'],
+                ['browser', 'Navegador', 'Browser', 'Navegador', 'Browser', 'Браузер', 'Браузер', 'Navigateur', 'Browser'],
+                ['player', 'Reprodutor', 'Media player', 'Reproductor', 'Player', 'Медиаплеер', 'Медиаплеер', 'Lecteur multimédia', 'Lettore multimediale']
+            ]),
+            question('solid-water', 'ice', [
+                'Qual é o estado sólido da água?',
+                'What is the solid state of water?',
+                '¿Cuál es el estado sólido del agua?',
+                'Was ist der feste Zustand von Wasser?',
+                '水の固体状態は何ですか？',
+                'Как называется твёрдое состояние воды?',
+                'Quel est l’état solide de l’eau ?',
+                'Qual è lo stato solido dell’acqua?'
+            ], [
+                ['liquid', 'Líquido', 'Liquid', 'Líquido', 'Flüssig', '液体', 'Жидкость', 'Liquide', 'Liquido'],
+                ['gas', 'Gás', 'Gas', 'Gas', 'Gasförmig', '気体', 'Газ', 'Gaz', 'Gas'],
+                ['ice', 'Gelo', 'Ice', 'Hielo', 'Eis', '氷', 'Лёд', 'Glace', 'Ghiaccio'],
+                ['vapor', 'Vapor', 'Vapor', 'Vapor', 'Dampf', '水蒸気', 'Пар', 'Vapeur', 'Vapore']
+            ]),
+            question('earth-satellite', 'moon', [
+                'Qual é o satélite natural da Terra?',
+                'What is Earth’s natural satellite?',
+                '¿Cuál es el satélite natural de la Tierra?',
+                'Was ist der natürliche Satellit der Erde?',
+                '地球の天然衛星は何ですか？',
+                'Как называется естественный спутник Земли?',
+                'Quel est le satellite naturel de la Terre ?',
+                'Qual è il satellite naturale della Terra?'
+            ], [
+                ['sun', 'Sol', 'Sun', 'Sol', 'Sonne', '太陽', 'Солнце', 'Soleil', 'Sole'],
+                ['mars', 'Marte', 'Mars', 'Marte', 'Mars', '火星', 'Марс', 'Mars', 'Marte'],
+                ['moon', 'Lua', 'Moon', 'Luna', 'Mond', '月', 'Луна', 'Lune', 'Luna'],
+                ['neptune', 'Netuno', 'Neptune', 'Neptuno', 'Neptun', '海王星', 'Нептун', 'Neptune', 'Nettuno']
+            ])
+        ];
+
+        const copyRows = {
+            title: ['Jogo do Bilhão', 'Billionaire Quiz', 'Quiz del millonario', 'Quiz um die Milliarde', '億万長者クイズ', 'Викторина на миллиард', 'Quiz du milliard', 'Quiz del miliardo'],
+            description: [
+                'Responda 10 perguntas sorteadas de um banco de 30, use as ajudas e tente ganhar o prêmio máximo.',
+                'Answer 10 randomly selected questions from a pool of 30, use your lifelines, and try to win the top prize.',
+                'Responde 10 preguntas seleccionadas al azar de un total de 30, usa las ayudas e intenta ganar el premio máximo.',
+                'Beantworte 10 zufällig ausgewählte Fragen aus einem Pool von 30, nutze deine Hilfen und gewinne den Höchstpreis.',
+                '全30問からランダムに選ばれる10問に答え、ライフラインを使って最高賞金を目指しましょう。',
+                'Ответьте на 10 случайных вопросов из 30, используйте подсказки и попробуйте выиграть главный приз.',
+                'Répondez à 10 questions tirées au sort parmi 30, utilisez vos jokers et tentez de gagner le prix maximal.',
+                'Rispondi a 10 domande estratte a caso da un totale di 30, usa gli aiuti e prova a vincere il premio massimo.'
+            ],
+            step: ['Pergunta', 'Question', 'Pregunta', 'Frage', '問題', 'Вопрос', 'Question', 'Domanda'],
+            currentPrize: ['Prêmio atual', 'Current prize', 'Premio actual', 'Aktueller Gewinn', '現在の賞金', 'Текущий приз', 'Gain actuel', 'Premio attuale'],
+            safePrize: ['Prêmio garantido', 'Guaranteed prize', 'Premio garantizado', 'Garantierter Gewinn', '保証された賞金', 'Гарантированный приз', 'Gain garanti', 'Premio garantito'],
+            score: ['Pontos acumulados', 'Accumulated points', 'Puntos acumulados', 'Gesammelte Punkte', '累計ポイント', 'Накопленные очки', 'Points cumulés', 'Punti accumulati'],
+            prizes: ['Prêmios', 'Prizes', 'Premios', 'Gewinne', '賞金', 'Призы', 'Prix', 'Premi'],
+            lifelines: ['Ajudas', 'Lifelines', 'Ayudas', 'Joker', 'ライフライン', 'Подсказки', 'Jokers', 'Aiuti'],
+            rules: ['Regras rápidas', 'Quick rules', 'Reglas rápidas', 'Kurzregeln', '簡単なルール', 'Краткие правила', 'Règles rapides', 'Regole rapide'],
+            start: ['Começar Quiz', 'Start Quiz', 'Empezar el quiz', 'Quiz starten', 'クイズを開始', 'Начать викторину', 'Commencer le quiz', 'Inizia il quiz'],
+            restart: ['Reiniciar Quiz', 'Restart Quiz', 'Reiniciar el quiz', 'Quiz neu starten', 'クイズをやり直す', 'Начать викторину заново', 'Recommencer le quiz', 'Ricomincia il quiz'],
+            fifty: ['50/50', '50/50', '50/50', '50/50', '50/50', '50/50', '50/50', '50/50'],
+            skip: ['Pular', 'Skip', 'Saltar', 'Überspringen', 'スキップ', 'Пропустить', 'Passer', 'Salta'],
+            audience: ['Plateia', 'Audience', 'Público', 'Publikum', '観客', 'Зал', 'Public', 'Pubblico'],
+            menu: ['Voltar ao Menu', 'Back to Menu', 'Volver al menú', 'Zurück zum Menü', 'メニューに戻る', 'Вернуться в меню', 'Retour au menu', 'Torna al menu'],
+            available: ['Disponível', 'Available', 'Disponible', 'Verfügbar', '使用可能', 'Доступно', 'Disponible', 'Disponibile'],
+            used: ['Usada', 'Used', 'Usada', 'Verwendet', '使用済み', 'Использовано', 'Utilisée', 'Usata'],
+            ruleOne: [
+                'Responda cada pergunta para subir na escada de prêmios. Uma resposta errada encerra o quiz.',
+                'Answer each question to climb the prize ladder. One wrong answer ends the quiz.',
+                'Responde cada pregunta para subir la escalera de premios. Una respuesta incorrecta termina el concurso.',
+                'Beantworte jede Frage, um die Gewinnleiter hinaufzusteigen. Eine falsche Antwort beendet das Quiz.',
+                '問題に正解して賞金を積み上げましょう。不正解が1つでもあるとクイズは終了します。',
+                'Отвечайте на вопросы, чтобы подниматься по лестнице призов. Одна ошибка завершит викторину.',
+                'Répondez à chaque question pour gravir l’échelle des gains. Une mauvaise réponse met fin au quiz.',
+                'Rispondi a ogni domanda per salire la scala dei premi. Una risposta errata termina il quiz.'
+            ],
+            ruleTwo: [
+                'Use 50/50 para eliminar duas opções erradas, Pular para avançar sem perder e Plateia para ver probabilidades.',
+                'Use 50/50 to remove two wrong choices, Skip to move on safely, and Audience to see the vote.',
+                'Usa 50/50 para eliminar dos opciones incorrectas, Saltar para avanzar sin perder y Público para ver los porcentajes.',
+                'Mit 50/50 entfernst du zwei falsche Antworten, mit Überspringen kommst du ohne Verlust weiter und das Publikum zeigt Abstimmungswerte.',
+                '50/50で不正解を2つ消去し、スキップで失点せずに進み、観客に投票結果を聞きましょう。',
+                'Используйте 50/50, чтобы убрать два неверных варианта, пропуск — чтобы идти дальше без потери, а зал — чтобы узнать результаты голосования.',
+                'Le 50/50 élimine deux mauvaises réponses, Passer permet de continuer sans pénalité et le public indique les résultats du vote.',
+                'Usa 50/50 per eliminare due risposte errate, Salta per proseguire senza penalità e Pubblico per vedere i voti.'
+            ],
+            ruleThree: [
+                'O prêmio final é desbloqueado ao acertar todas as perguntas.',
+                'The top prize is yours when you answer every question correctly.',
+                'El premio máximo se obtiene al responder correctamente todas las preguntas.',
+                'Den Höchstpreis erhältst du, wenn du alle Fragen richtig beantwortest.',
+                'すべての問題に正解すると最高賞金を獲得できます。',
+                'Главный приз достанется вам, если вы ответите правильно на все вопросы.',
+                'Le prix maximal est remporté si vous répondez correctement à toutes les questions.',
+                'Il premio massimo si ottiene rispondendo correttamente a tutte le domande.'
+            ],
+            initialQuestion: [
+                'Clique em "Começar Quiz" para iniciar o Jogo do Bilhão.',
+                'Click “Start Quiz” to begin the Billionaire Quiz.',
+                'Haz clic en «Empezar el quiz» para iniciar el Quiz del millonario.',
+                'Klicke auf „Quiz starten“, um die Quizshow zu beginnen.',
+                '「クイズを開始」をクリックして億万長者クイズを始めましょう。',
+                'Нажмите «Начать викторину», чтобы начать игру.',
+                'Cliquez sur « Commencer le quiz » pour démarrer le quiz.',
+                'Fai clic su «Inizia il quiz» per iniziare il quiz.'
+            ],
+            initialStatus: [
+                'Clique em "Começar Quiz" para iniciar o Jogo do Bilhão.',
+                'Click “Start Quiz” to begin the Billionaire Quiz.',
+                'Haz clic en «Empezar el quiz» para iniciar el Quiz del millonario.',
+                'Klicke auf „Quiz starten“, um die Quizshow zu beginnen.',
+                '「クイズを開始」をクリックして億万長者クイズを始めましょう。',
+                'Нажмите «Начать викторину», чтобы начать игру.',
+                'Cliquez sur « Commencer le quiz » pour démarrer le quiz.',
+                'Fai clic su «Inizia il quiz» per iniziare il quiz.'
+            ],
+            chooseAnswer: ['Escolha uma resposta.', 'Choose an answer.', 'Elige una respuesta.', 'Wähle eine Antwort.', '答えを選んでください。', 'Выберите ответ.', 'Choisissez une réponse.', 'Scegli una risposta.'],
+            correct: [
+                'Correto! Avançando para a próxima pergunta...',
+                'Correct! Moving on to the next question...',
+                '¡Correcto! Pasando a la siguiente pregunta...',
+                'Richtig! Weiter zur nächsten Frage...',
+                '正解！次の問題に進みます…',
+                'Верно! Переходим к следующему вопросу...',
+                'Bonne réponse ! Passage à la question suivante...',
+                'Corretto! Passiamo alla domanda successiva...'
+            ],
+            wrong: [
+                'Errado! A resposta correta era "{answer}". Fim do jogo.',
+                'Wrong! The correct answer was “{answer}”. Game over.',
+                '¡Incorrecto! La respuesta correcta era «{answer}». Fin del juego.',
+                'Falsch! Die richtige Antwort war „{answer}“. Spiel vorbei.',
+                '不正解！正解は「{answer}」でした。ゲーム終了。',
+                'Неверно! Правильный ответ: «{answer}». Игра окончена.',
+                'Mauvaise réponse ! La bonne réponse était « {answer} ». Fin de la partie.',
+                'Risposta errata! La risposta corretta era «{answer}». Fine del gioco.'
+            ],
+            fiftyUsed: [
+                '50/50 usado. Duas opções foram removidas.',
+                '50/50 used. Two choices have been removed.',
+                '50/50 usado. Se han eliminado dos opciones.',
+                '50/50 verwendet. Zwei Antworten wurden entfernt.',
+                '50/50を使用しました。不正解の選択肢を2つ削除しました。',
+                'Подсказка 50/50 использована. Два варианта удалены.',
+                '50/50 utilisé. Deux réponses ont été éliminées.',
+                '50/50 usato. Sono state eliminate due opzioni.'
+            ],
+            skipped: [
+                'Pergunta pulada. Boa sorte na próxima!',
+                'Question skipped. Good luck with the next one!',
+                'Pregunta saltada. ¡Suerte con la siguiente!',
+                'Frage übersprungen. Viel Glück bei der nächsten!',
+                '問題をスキップしました。次の問題も頑張りましょう！',
+                'Вопрос пропущен. Удачи со следующим!',
+                'Question passée. Bonne chance pour la suivante !',
+                'Domanda saltata. Buona fortuna con la prossima!'
+            ],
+            started: [
+                'Quiz iniciado! Boa sorte.',
+                'Quiz started! Good luck.',
+                '¡Comienza el concurso! ¡Mucha suerte!',
+                'Das Quiz beginnt! Viel Glück.',
+                'クイズ開始！頑張ってください。',
+                'Викторина началась! Удачи.',
+                'Le quiz commence ! Bonne chance.',
+                'Quiz iniziato! Buona fortuna.'
+            ],
+            victoryQuestion: [
+                'Vitória! Você conquistou o prêmio máximo.',
+                'Victory! You won the top prize.',
+                '¡Victoria! Has ganado el premio máximo.',
+                'Sieg! Du hast den Höchstpreis gewonnen.',
+                '勝利！最高賞金を獲得しました。',
+                'Победа! Вы выиграли главный приз.',
+                'Victoire ! Vous avez remporté le prix maximal.',
+                'Vittoria! Hai vinto il premio massimo.'
+            ],
+            victoryStatus: [
+                'Parabéns! Você venceu o Jogo do Bilhão e conquistou {prize}!',
+                'Congratulations! You won the Billionaire Quiz and claimed {prize}!',
+                '¡Enhorabuena! Has ganado el Quiz del millonario y te llevas {prize}.',
+                'Glückwunsch! Du hast das Quiz gewonnen und {prize} erspielt!',
+                'おめでとうございます！億万長者クイズに勝利し、賞金 {prize} を獲得しました！',
+                'Поздравляем! Вы выиграли викторину и получили приз {prize}!',
+                'Félicitations ! Vous avez remporté le quiz et gagné {prize} !',
+                'Congratulazioni! Hai vinto il quiz e ti sei aggiudicato {prize}!'
+            ],
+            finalPrize: ['Prêmio final: {prize}', 'Final prize: {prize}', 'Premio final: {prize}', 'Hauptgewinn: {prize}', '最終賞金：{prize}', 'Главный приз: {prize}', 'Prix final : {prize}', 'Premio finale: {prize}'],
+            gameOver: [
+                'Fim de jogo — você saiu com {prize}.',
+                'Game over — you leave with {prize}.',
+                'Fin del juego: te llevas {prize}.',
+                'Spiel vorbei — du gehst mit {prize}.',
+                'ゲーム終了 — 獲得賞金は {prize} です。',
+                'Игра окончена — ваш выигрыш: {prize}.',
+                'Fin de la partie — vous repartez avec {prize}.',
+                'Fine del gioco — hai vinto {prize}.'
+            ],
+            answerWas: ['Resposta correta: {answer}', 'Correct answer: {answer}', 'Respuesta correcta: {answer}', 'Richtige Antwort: {answer}', '正解：{answer}', 'Правильный ответ: {answer}', 'Bonne réponse : {answer}', 'Risposta corretta: {answer}'],
+            audienceHelp: [
+                'Ajuda da plateia: {detail}',
+                'Audience vote: {detail}',
+                'Voto del público: {detail}',
+                'Publikumsabstimmung: {detail}',
+                '観客の投票：{detail}',
+                'Голосование зала: {detail}',
+                'Vote du public : {detail}',
+                'Voto del pubblico: {detail}'
+            ]
+        };
+
+        const prizes = ['R$ 500', 'R$ 1.000', 'R$ 5.000', 'R$ 10.000', 'R$ 25.000', 'R$ 50.000', 'R$ 100.000', 'R$ 200.000', 'R$ 500.000', 'R$ 1.000.000'];
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options');
+        const currentStep = document.getElementById('current-step');
+        const prizeDisplay = document.getElementById('prize-display');
+        const safePrizeDisplay = document.getElementById('safe-prize');
+        const messageText = document.getElementById('message-text');
+        const prizeList = document.getElementById('prize-list');
+        const lifelineFifty = document.getElementById('lifeline-fifty');
+        const lifelineSkip = document.getElementById('lifeline-skip');
+        const lifelineAudience = document.getElementById('lifeline-audience');
+
+        const startBtn = document.getElementById('start-btn');
+        const fiftyBtn = document.getElementById('fifty-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const audienceBtn = document.getElementById('audience-btn');
+        const menuBtn = document.getElementById('menu-btn');
+        const resultBanner = document.getElementById('result-banner');
+
+        let currentIndex = 0;
+        let currentLanguage = 'pt-BR';
+        let gameActive = false;
+        let usedFifty = false;
+        let usedSkip = false;
+        let usedAudience = false;
+        let answered = false;
+        let shuffledQuestions = [];
+        let currentStatus = { key: 'initialStatus', params: {} };
+        let currentResult = null;
+        let gameOutcome = null;
+        let audienceVotes = null;
+        const safeSteps = [4, 7];
+
+        const localeIndex = () => Math.max(0, localeOrder.indexOf(currentLanguage));
+        const localized = (key, params = {}) => copyRows[key][localeIndex()].replace(/\{(\w+)\}/g, (_, name) => (
+            params[name] === undefined ? `{${name}}` : params[name]
+        ));
+        const setStatus = (key, params = {}) => {
+            currentStatus = { key, params };
+            messageText.textContent = currentStatusText();
+        };
+        const currentStatusText = () => {
+            const params = Object.assign({}, currentStatus.params);
+            if (currentStatus.key === 'wrong' && shuffledQuestions.length) {
+                const correct = shuffledQuestions[currentIndex].options.find((option) => option.id === params.answerId);
+                params.answer = correct ? correct.labels[localeIndex()] : '';
+            }
+            if (currentStatus.key === 'audienceHelp' && shuffledQuestions.length && audienceVotes) {
+                const question = shuffledQuestions[currentIndex];
+                params.detail = question.options
+                    .map((option, index) => `${option.labels[localeIndex()]}: ${audienceVotes[index]}%`)
+                    .join(' • ');
+            }
+            return localized(currentStatus.key, params);
+        };
+        const currentResultText = () => {
+            const params = Object.assign({}, currentResult.params);
+            if (currentResult.key === 'answerWas' && shuffledQuestions.length) {
+                const correct = shuffledQuestions[currentIndex].options.find((option) => option.id === params.answerId);
+                params.answer = correct ? correct.labels[localeIndex()] : '';
+            }
+            return localized(currentResult.key, params);
+        };
+
+        const updateLocale = () => {
+            const language = window.BuuroGameLanguage && window.BuuroGameLanguage.language;
+            currentLanguage = localeOrder.includes(language) ? language : 'pt-BR';
+            const staticText = {
+                'page-title': 'title',
+                'page-description': 'description',
+                'step-label': 'step',
+                'current-prize-label': 'currentPrize',
+                'guaranteed-prize-label': 'safePrize',
+                'score-label': 'score',
+                'prizes-label': 'prizes',
+                'lifelines-label': 'lifelines',
+                'rules-label': 'rules',
+                'rule-one': 'ruleOne',
+                'rule-two': 'ruleTwo',
+                'rule-three': 'ruleThree'
+            };
+            Object.entries(staticText).forEach(([elementId, messageKey]) => {
+                document.getElementById(elementId).textContent = localized(messageKey);
+            });
+            document.title = localized('title');
+            startBtn.textContent = localized(gameActive || gameOutcome ? 'restart' : 'start');
+            fiftyBtn.textContent = localized('fifty');
+            skipBtn.textContent = localized('skip');
+            audienceBtn.textContent = localized('audience');
+            menuBtn.textContent = localized('menu');
+            lifelineFifty.querySelector('[data-lifeline-name]').textContent = localized('fifty');
+            lifelineSkip.querySelector('[data-lifeline-name]').textContent = localized('skip');
+            lifelineAudience.querySelector('[data-lifeline-name]').textContent = localized('audience');
+            [lifelineFifty, lifelineSkip, lifelineAudience].forEach((item, index) => {
+                const used = [usedFifty, usedSkip, usedAudience][index];
+                item.querySelectorAll('span')[1].textContent = localized(used ? 'used' : 'available');
+            });
+
+            if (gameOutcome === 'victory') {
+                questionText.textContent = localized('victoryQuestion');
+            } else if (gameOutcome === 'loss') {
+                questionText.textContent = localized('gameOver', { prize: getSafePrize() });
+            } else if (shuffledQuestions.length) {
+                questionText.textContent = shuffledQuestions[currentIndex].text[localeIndex()];
+                [...optionsContainer.children].forEach((button) => {
+                    const option = shuffledQuestions[currentIndex].options.find((item) => item.id === button.dataset.optionId);
+                    if (option) button.textContent = option.labels[localeIndex()];
+                });
+            } else {
+                questionText.textContent = localized('initialQuestion');
+            }
+
+            messageText.textContent = currentStatusText();
+            if (currentResult) {
+                resultBanner.textContent = currentResultText();
+            }
+        };
+
+        const questionAudio = new Audio('sons/sspsurvival-clock-clock-sound-clock-clock-time-10343.mp3');
+        questionAudio.preload = 'auto';
+        questionAudio.volume = 0.55;
+
+        const playQuestionSound = () => {
+            if (!questionAudio.paused) {
+                questionAudio.currentTime = 0;
+            }
+            questionAudio.play().catch(() => {
+                // O navegador pode bloquear áudio automático até a primeira interação.
+            });
+        };
+
+        const playTone = (frequency, duration, type = 'sine') => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = ctx.createOscillator();
+            const gain = ctx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.value = frequency;
+            oscillator.connect(gain);
+            gain.connect(ctx.destination);
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration / 1000);
+            oscillator.stop(ctx.currentTime + duration / 1000 + 0.05);
+        };
+
+        const playCorrect = () => playTone(880, 140, 'triangle');
+        const playWrong = () => playTone(220, 360, 'sawtooth');
+        const playWin = () => {
+            playTone(880, 120, 'sine');
+            setTimeout(() => playTone(1047, 120, 'sine'), 140);
+            setTimeout(() => playTone(1318, 250, 'sine'), 280);
+        };
+        const playLose = () => {
+            playTone(220, 200, 'sine');
+            setTimeout(() => playTone(196, 200, 'sine'), 250);
+        };
+
+        const showResult = (key, type, params = {}) => {
+            currentResult = { key, params };
+            resultBanner.textContent = currentResultText();
+            resultBanner.className = `result-banner show ${type}`;
+        };
+
+        const hideResult = () => {
+            currentResult = null;
+            resultBanner.className = 'result-banner';
+            resultBanner.textContent = '';
+        };
+
+        const shuffleArray = (array) => {
+            return array.slice().sort(() => Math.random() - 0.5);
+        };
+
+        const getSafePrize = () => {
+            if (currentIndex > safeSteps[1]) return prizes[safeSteps[1]];
+            if (currentIndex > safeSteps[0]) return prizes[safeSteps[0]];
+            return 'R$ 0';
+        };
+
+        const updatePrizeList = () => {
+            [...prizeList.children].forEach((item, index) => {
+                item.classList.toggle('active', index === currentIndex);
+            });
+        };
+
+        const updateGameState = () => {
+            updatePrizeList();
+            safePrizeDisplay.textContent = getSafePrize();
+            fiftyBtn.disabled = usedFifty || answered || !gameActive;
+            skipBtn.disabled = usedSkip || answered || !gameActive;
+            audienceBtn.disabled = usedAudience || answered || !gameActive;
+        };
+
+        const renderQuestion = () => {
+            const question = shuffledQuestions[currentIndex];
+            playQuestionSound();
+            questionText.textContent = question.text[localeIndex()];
+            currentStep.textContent = `${currentIndex + 1} / ${shuffledQuestions.length}`;
+            prizeDisplay.textContent = prizes[currentIndex];
+            optionsContainer.innerHTML = '';
+
+            const shuffledOptions = question.options
+                .map((option) => option)
+                .sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach((option) => {
+                const button = document.createElement('button');
+                button.className = 'option-button';
+                button.textContent = option.labels[localeIndex()];
+                button.dataset.optionId = option.id;
+                button.addEventListener('click', () => selectOption(option.id));
+                optionsContainer.appendChild(button);
+            });
+
+            setStatus('chooseAnswer');
+            answered = false;
+            hideResult();
+            updateGameState();
+        };
+
+        const selectOption = (optionId) => {
+            if (!gameActive || answered) return;
+            answered = true;
+            const question = shuffledQuestions[currentIndex];
+            const buttons = [...optionsContainer.children];
+
+            buttons.forEach((button) => {
+                button.disabled = true;
+                const buttonOptionId = button.dataset.optionId;
+                if (buttonOptionId === question.answer) {
+                    button.classList.add('correct');
+                }
+                if (buttonOptionId === optionId && buttonOptionId !== question.answer) {
+                    button.classList.add('wrong');
+                }
+            });
+
+            updateGameState();
+
+            if (optionId === question.answer) {
+                playCorrect();
+                setStatus('correct');
+                setTimeout(() => nextQuestion(), 1200);
+            } else {
+                playWrong();
+                const correctAnswer = question.options.find((option) => option.id === question.answer);
+                setStatus('wrong', { answerId: correctAnswer.id });
+                endGame(false);
+            }
+        };
+
+        const nextQuestion = () => {
+            currentIndex += 1;
+            if (currentIndex >= shuffledQuestions.length) {
+                endGame(true);
+                return;
+            }
+            renderQuestion();
+        };
+
+        const applyFifty = () => {
+            if (!gameActive || usedFifty || answered) return;
+            usedFifty = true;
+            lifelineFifty.querySelectorAll('span')[1].textContent = localized('used');
+            playTone(520, 140, 'square');
+            setStatus('fiftyUsed');
+            removeWrongOptions();
+            updateGameState();
+        };
+
+        const removeWrongOptions = () => {
+            const question = shuffledQuestions[currentIndex];
+            const wrongOptions = question.options.filter((option) => option.id !== question.answer);
+            wrongOptions.sort(() => Math.random() - 0.5);
+            let removed = 0;
+            const buttons = [...optionsContainer.children];
+            for (const wrongOption of wrongOptions) {
+                if (removed >= 2) break;
+                const btn = buttons.find((button) => button.dataset.optionId === wrongOption.id);
+                if (btn) {
+                    btn.classList.add('disabled');
+                    btn.disabled = true;
+                    removed += 1;
+                }
+            }
+        };
+
+        const skipQuestion = () => {
+            if (!gameActive || usedSkip || answered) return;
+            usedSkip = true;
+            lifelineSkip.querySelectorAll('span')[1].textContent = localized('used');
+            playTone(620, 160, 'triangle');
+            currentIndex += 1;
+            if (currentIndex >= shuffledQuestions.length) {
+                endGame(true);
+                return;
+            }
+            renderQuestion();
+            setStatus('skipped');
+        };
+
+        const endGame = (victory) => {
+            gameActive = false;
+            gameOutcome = victory ? 'victory' : 'loss';
+            audienceVotes = null;
+            const wonPoints = victory
+                ? 1000000
+                : Number(getSafePrize().replace(/[^0-9]/g, ''));
+            GameScoreCounter.add('bilhao', wonPoints);
+            fiftyBtn.disabled = true;
+            skipBtn.disabled = true;
+            audienceBtn.disabled = true;
+            startBtn.textContent = localized('restart');
+            if (victory) {
+                currentIndex = shuffledQuestions.length - 1;
+                prizeDisplay.textContent = prizes[prizes.length - 1];
+                const finalPrize = prizes[prizes.length - 1];
+                questionText.textContent = localized('victoryQuestion');
+                optionsContainer.innerHTML = '';
+                setStatus('victoryStatus', { prize: finalPrize });
+                showResult('finalPrize', 'success', { prize: finalPrize });
+                playWin();
+            } else {
+                const safePrize = getSafePrize();
+                questionText.textContent = localized('gameOver', { prize: safePrize });
+                optionsContainer.innerHTML = '';
+                const correctAnswer = shuffledQuestions[currentIndex].options.find((option) => option.id === shuffledQuestions[currentIndex].answer);
+                showResult('answerWas', 'failure', { answerId: correctAnswer.id });
+                playLose();
+            }
+            updateGameState();
+        };
+
+        const audiencePercentages = () => {
+            const question = shuffledQuestions[currentIndex];
+            const percentages = Array(question.options.length).fill(0);
+            const correctIndex = question.options.findIndex((option) => option.id === question.answer);
+            const correctChance = 50 + Math.floor(Math.random() * 21);
+            let remaining = 100 - correctChance;
+
+            percentages[correctIndex] = correctChance;
+            const wrongIndices = question.options.map((_, idx) => idx).filter((idx) => idx !== correctIndex);
+
+            wrongIndices.forEach((idx, index) => {
+                if (index === wrongIndices.length - 1) {
+                    percentages[idx] = remaining;
+                } else {
+                    const value = Math.floor(Math.random() * (remaining - (wrongIndices.length - index - 1))) + 1;
+                    percentages[idx] = value;
+                    remaining -= value;
+                }
+            });
+
+            return percentages;
+        };
+
+        const applyAudience = () => {
+            if (!gameActive || usedAudience || answered) return;
+            usedAudience = true;
+            lifelineAudience.querySelectorAll('span')[1].textContent = localized('used');
+            playTone(480, 140, 'triangle');
+            audienceVotes = audiencePercentages();
+            setStatus('audienceHelp');
+            updateGameState();
+        };
+
+        const startGame = () => {
+            if (!gameActive) {
+                gameActive = true;
+            }
+            currentIndex = 0;
+            gameOutcome = null;
+            usedFifty = false;
+            usedSkip = false;
+            usedAudience = false;
+            audienceVotes = null;
+            shuffledQuestions = shuffleArray(questions).slice(0, 10);
+            [lifelineFifty, lifelineSkip, lifelineAudience].forEach((item) => {
+                item.querySelectorAll('span')[1].textContent = localized('available');
+            });
+            startBtn.textContent = localized('restart');
+            renderQuestion();
+            setStatus('started');
+        };
+
+        const goToMenu = () => {
+            window.top.location.href = './index.html?menu=1';
+        };
+
+        startBtn.addEventListener('click', startGame);
+        fiftyBtn.addEventListener('click', applyFifty);
+        skipBtn.addEventListener('click', skipQuestion);
+        audienceBtn.addEventListener('click', applyAudience);
+        menuBtn.addEventListener('click', goToMenu);
+
+        updateLocale();
+        window.addEventListener('buuro-language-applied', updateLocale);
+        setStatus('initialStatus');
+    </script>
+    <script>
+        // Allow parent page to request start via postMessage
+        window.addEventListener('message', (e) => {
+            try {
+                const msg = e.data;
+                if (msg && msg.type === 'start') {
+                    const btn = document.getElementById('start-btn');
+                    if (btn && !btn.disabled) btn.click();
+                }
+            } catch (err) { /* ignore */ }
+        });
+    </script>
+</body>
+</html>

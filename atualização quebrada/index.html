@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega Jogo da Memória: Banquete Completo</title>
+    <script src="../game-language.js" defer></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #111827;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        /* Painel de Status */
+        .status-panel {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            background: #1f2937;
+            padding: 8px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: 1px solid #374151;
+        }
+
+        .status-item span {
+            font-weight: bold;
+            color: #f59e0b;
+        }
+
+        .grid {
+            display: grid;
+            width: min(100%, 760px);
+            grid-gap: 6px;
+            perspective: 1000px;
+        }
+
+        .grid.easy { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid.medium { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        .grid.hard { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+
+        @media (min-width: 480px) {
+            .grid {
+                grid-gap: 8px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-gap: 12px;
+            }
+        }
+
+        /* Estrutura das cartas */
+        .card {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .card.flip {
+            transform: rotateY(180deg);
+        }
+
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        @media (min-width: 480px) {
+            .face { font-size: 1.8rem; }
+        }
+
+        @media (min-width: 768px) {
+            .face { font-size: 2.3rem; border-radius: 12px; }
+        }
+
+        /* Verso revelado */
+        .front-face {
+            background-color: #374151;
+            transform: rotateY(180deg);
+            border: 2px solid #f59e0b;
+            flex-direction: column;
+            gap: 2px;
+            padding: 3px;
+            text-align: center;
+        }
+
+        .food-symbol {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .food-name {
+            font-size: 0.5rem;
+            line-height: 1.05;
+            overflow-wrap: anywhere;
+        }
+
+        @media (min-width: 480px) {
+            .food-symbol { font-size: 1.8rem; }
+            .food-name { font-size: 0.62rem; }
+        }
+
+        /* Frente oculta */
+        .back-face {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border: 2px solid #374151;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover .back-face {
+            border-color: #f59e0b;
+        }
+
+        /* Botão */
+        button {
+            margin-top: 25px;
+            padding: 10px 25px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #f59e0b;
+            color: #111827;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #fbbf24;
+            transform: translateY(-2px);
+        }
+
+        .difficulty-panel,
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .difficulty-panel label {
+            color: #d1d5db;
+            font-weight: bold;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            background: #1f2937;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .controls {
+            margin-bottom: 0;
+        }
+
+        .controls button {
+            margin-top: 20px;
+        }
+
+        .menu-link {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-decoration: none;
+            background-color: #374151;
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .menu-link:hover {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+    </style>
+    <link rel="stylesheet" href="../site-preferences.css">
+    <script src="../site-preferences.js"></script>
+</head>
+<body>
+
+    <h1>Mega Jogo da Memória Gourmet</h1>
+    
+    <div class="difficulty-panel">
+        <label for="difficulty">Dificuldade:</label>
+        <select id="difficulty" onchange="resetGame()">
+            <option value="easy">Fácil (4x4)</option>
+            <option value="medium" selected>Médio (6x6)</option>
+            <option value="hard">Difícil (8x8)</option>
+        </select>
+    </div>
+
+    <div class="status-panel">
+        <div class="status-item">Tempo: <span id="timer">00:00</span></div>
+        <div class="status-item">Erros: <span id="wrong-attempts">0</span></div>
+    </div>
+    
+    <div class="grid" id="grid"></div>
+
+    <div class="controls">
+        <button id="music-toggle" type="button" aria-pressed="false">Tocar música</button>
+        <button type="button" onclick="resetGame()">Reiniciar Jogo</button>
+        <a class="menu-link" href="../index.html?menu=1#menu-container" target="_top">Voltar ao Menu</a>
+    </div>
+    <audio id="background-music" src="./One%20Piece%20ST%20-%20New%20World%20Symphony%20-%20XImmortalX.mp3" loop autoplay preload="auto"></audio>
+
+    <script src="../score-counter.js"></script>
+    <script>
+        const grid = document.getElementById('grid');
+        const timerDisplay = document.getElementById('timer');
+        const attemptsDisplay = document.getElementById('wrong-attempts');
+        const difficultySelect = document.getElementById('difficulty');
+        const music = document.getElementById('background-music');
+        const musicToggle = document.getElementById('music-toggle');
+        
+        const allFoods = [
+            '🍕', '🍔', '🍿', '🍩', '🍦', '🍫', '🍓', '🥑', 
+            '🍉', '🍇', '🍌', '🍍', '🍎', '🥦', '🥕', '🌽', 
+            '🥩', '🥞', '🍳', '🧀', '🥨', '🥐', '🌮', '🍣',
+            '🍒', '🍑', '🥝', '🍐', '🍊', '🫐', '🥥', '🥭',
+            '🍟', '🌭', '🥪', '🌯', '🥗', '🍜', '🍙', '🧁',
+            '🍪', '🎂', '🥧', '🍞', '🥯', '🫒', '🧄', '🧅'
+        ];
+
+        const foodNamesByLocale = {
+            en: ['Pizza', 'Hamburger', 'Popcorn', 'Doughnut', 'Ice cream', 'Chocolate', 'Strawberry', 'Avocado', 'Watermelon', 'Grapes', 'Banana', 'Pineapple', 'Apple', 'Broccoli', 'Carrot', 'Corn', 'Steak', 'Pancakes', 'Fried egg', 'Cheese', 'Pretzel', 'Croissant', 'Taco', 'Sushi', 'Cherries', 'Peach', 'Kiwi', 'Pear', 'Orange', 'Blueberries', 'Coconut', 'Mango', 'French fries', 'Hot dog', 'Sandwich', 'Burrito', 'Salad', 'Noodles', 'Rice ball', 'Cupcake', 'Cookie', 'Cake', 'Pie', 'Bread', 'Bagel', 'Olives', 'Garlic', 'Onion'],
+            es: ['Pizza', 'Hamburguesa', 'Palomitas', 'Dona', 'Helado', 'Chocolate', 'Fresa', 'Aguacate', 'Sandía', 'Uvas', 'Plátano', 'Piña', 'Manzana', 'Brócoli', 'Zanahoria', 'Maíz', 'Filete', 'Tortitas', 'Huevo frito', 'Queso', 'Pretzel', 'Cruasán', 'Taco', 'Sushi', 'Cerezas', 'Melocotón', 'Kiwi', 'Pera', 'Naranja', 'Arándanos', 'Coco', 'Mango', 'Patatas fritas', 'Perrito caliente', 'Sándwich', 'Burrito', 'Ensalada', 'Fideos', 'Onigiri', 'Magdalena', 'Galleta', 'Pastel', 'Tarta', 'Pan', 'Bagel', 'Aceitunas', 'Ajo', 'Cebolla'],
+            de: ['Pizza', 'Hamburger', 'Popcorn', 'Donut', 'Eis', 'Schokolade', 'Erdbeere', 'Avocado', 'Wassermelone', 'Trauben', 'Banane', 'Ananas', 'Apfel', 'Brokkoli', 'Karotte', 'Mais', 'Steak', 'Pfannkuchen', 'Spiegelei', 'Käse', 'Brezel', 'Croissant', 'Taco', 'Sushi', 'Kirschen', 'Pfirsich', 'Kiwi', 'Birne', 'Orange', 'Blaubeeren', 'Kokosnuss', 'Mango', 'Pommes frites', 'Hotdog', 'Sandwich', 'Burrito', 'Salat', 'Nudeln', 'Reisbällchen', 'Cupcake', 'Keks', 'Kuchen', 'Torte', 'Brot', 'Bagel', 'Oliven', 'Knoblauch', 'Zwiebel'],
+            'pt-BR': ['Pizza', 'Hambúrguer', 'Pipoca', 'Rosquinha', 'Sorvete', 'Chocolate', 'Morango', 'Abacate', 'Melancia', 'Uvas', 'Banana', 'Abacaxi', 'Maçã', 'Brócolis', 'Cenoura', 'Milho', 'Bife', 'Panquecas', 'Ovo frito', 'Queijo', 'Pretzel', 'Croissant', 'Taco', 'Sushi', 'Cerejas', 'Pêssego', 'Kiwi', 'Pera', 'Laranja', 'Mirtilos', 'Coco', 'Manga', 'Batata frita', 'Cachorro-quente', 'Sanduíche', 'Burrito', 'Salada', 'Macarrão', 'Bolinho de arroz', 'Cupcake', 'Biscoito', 'Bolo', 'Torta', 'Pão', 'Bagel', 'Azeitonas', 'Alho', 'Cebola'],
+            ja: ['ピザ', 'ハンバーガー', 'ポップコーン', 'ドーナツ', 'アイスクリーム', 'チョコレート', 'イチゴ', 'アボカド', 'スイカ', 'ブドウ', 'バナナ', 'パイナップル', 'リンゴ', 'ブロッコリー', 'ニンジン', 'トウモロコシ', 'ステーキ', 'パンケーキ', '目玉焼き', 'チーズ', 'プレッツェル', 'クロワッサン', 'タコス', '寿司', 'サクランボ', '桃', 'キウイ', '梨', 'オレンジ', 'ブルーベリー', 'ココナッツ', 'マンゴー', 'フライドポテト', 'ホットドッグ', 'サンドイッチ', 'ブリトー', 'サラダ', '麺', 'おにぎり', 'カップケーキ', 'クッキー', 'ケーキ', 'パイ', 'パン', 'ベーグル', 'オリーブ', 'ニンニク', '玉ねぎ'],
+            ru: ['Пицца', 'Бургер', 'Попкорн', 'Пончик', 'Мороженое', 'Шоколад', 'Клубника', 'Авокадо', 'Арбуз', 'Виноград', 'Банан', 'Ананас', 'Яблоко', 'Брокколи', 'Морковь', 'Кукуруза', 'Стейк', 'Блины', 'Яичница', 'Сыр', 'Крендель', 'Круассан', 'Тако', 'Суши', 'Вишня', 'Персик', 'Киви', 'Груша', 'Апельсин', 'Черника', 'Кокос', 'Манго', 'Картофель фри', 'Хот-дог', 'Сэндвич', 'Буррито', 'Салат', 'Лапша', 'Рисовый шарик', 'Кекс', 'Печенье', 'Торт', 'Пирог', 'Хлеб', 'Бейгл', 'Оливки', 'Чеснок', 'Лук'],
+            fr: ['Pizza', 'Hamburger', 'Pop-corn', 'Beignet', 'Glace', 'Chocolat', 'Fraise', 'Avocat', 'Pastèque', 'Raisins', 'Banane', 'Ananas', 'Pomme', 'Brocoli', 'Carotte', 'Maïs', 'Steak', 'Crêpes', 'Œuf au plat', 'Fromage', 'Bretzel', 'Croissant', 'Taco', 'Sushi', 'Cerises', 'Pêche', 'Kiwi', 'Poire', 'Orange', 'Myrtilles', 'Noix de coco', 'Mangue', 'Frites', 'Hot-dog', 'Sandwich', 'Burrito', 'Salade', 'Nouilles', 'Onigiri', 'Cupcake', 'Biscuit', 'Gâteau', 'Tarte', 'Pain', 'Bagel', 'Olives', 'Ail', 'Oignon'],
+            it: ['Pizza', 'Hamburger', 'Popcorn', 'Ciambella', 'Gelato', 'Cioccolato', 'Fragola', 'Avocado', 'Anguria', 'Uva', 'Banana', 'Ananas', 'Mela', 'Broccoli', 'Carota', 'Mais', 'Bistecca', 'Pancake', 'Uovo fritto', 'Formaggio', 'Pretzel', 'Cornetto', 'Taco', 'Sushi', 'Ciliegie', 'Pesca', 'Kiwi', 'Pera', 'Arancia', 'Mirtilli', 'Noce di cocco', 'Mango', 'Patatine fritte', 'Hot dog', 'Panino', 'Burrito', 'Insalata', 'Noodles', 'Onigiri', 'Cupcake', 'Biscotto', 'Torta', 'Crostata', 'Pane', 'Bagel', 'Olive', 'Aglio', 'Cipolla']
+        };
+
+        function selectedFoodLocale() {
+            const locale = localStorage.getItem('buuro-language-v1');
+            return foodNamesByLocale[locale] ? locale : 'pt-BR';
+        }
+
+        function foodName(symbol) {
+            return foodNamesByLocale[selectedFoodLocale()][allFoods.indexOf(symbol)] || '';
+        }
+
+        function updateFoodCardNames() {
+            grid.querySelectorAll('.card').forEach((card) => {
+                const name = card.querySelector('.food-name');
+                if (name) name.textContent = foodName(card.dataset.symbol);
+            });
+        }
+
+        let cardsArray = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        
+        let wrongAttempts = 0;
+        let totalMatches = 0;
+        let timeElapsed = 0;
+        let timerInterval = null;
+        let mismatchTimeout = null;
+        let victoryTimeout = null;
+        let gameStarted = false;
+
+        function shuffle(array) {
+            for (let index = array.length - 1; index > 0; index--) {
+                const randomIndex = Math.floor(Math.random() * (index + 1));
+                [array[index], array[randomIndex]] = [array[randomIndex], array[index]];
+            }
+            return array;
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeElapsed = 0;
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                const minutes = String(Math.floor(timeElapsed / 60)).padStart(2, '0');
+                const seconds = String(timeElapsed % 60).padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function createBoard() {
+            grid.innerHTML = '';
+            const difficulty = difficultySelect.value;
+            const pairsByDifficulty = { easy: 8, medium: 18, hard: 32 };
+            const selectedFoods = allFoods.slice(0, pairsByDifficulty[difficulty]);
+            cardsArray = [...selectedFoods, ...selectedFoods];
+            grid.className = `grid ${difficulty}`;
+            const shuffledCards = shuffle([...cardsArray]);
+
+            shuffledCards.forEach((symbol) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.symbol = symbol;
+
+                const frontFace = document.createElement('div');
+                frontFace.classList.add('face', 'front-face');
+                const foodSymbol = document.createElement('span');
+                foodSymbol.classList.add('food-symbol');
+                foodSymbol.textContent = symbol;
+                const foodLabel = document.createElement('span');
+                foodLabel.classList.add('food-name');
+                foodLabel.textContent = foodName(symbol);
+                frontFace.append(foodSymbol, foodLabel);
+
+                const backFace = document.createElement('div');
+                backFace.classList.add('face', 'back-face');
+                backFace.textContent = '🍱'; // Verso agora é uma caixinha de Bento
+
+                card.appendChild(frontFace);
+                card.appendChild(backFace);
+                card.addEventListener('click', flipCard);
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            startBackgroundMusic();
+
+            if (!gameStarted) {
+                gameStarted = true;
+                startTimer();
+            }
+
+            this.classList.add('flip');
+
+            if (!firstCard) {
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.symbol === secondCard.dataset.symbol;
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            
+            totalMatches++;
+            if (totalMatches === cardsArray.length / 2) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                GameScoreCounter.add('memoria', 100);
+                victoryTimeout = setTimeout(() => {
+                    alert(`Vitória épica! Você memorizou o banquete inteiro!\nTempo total: ${timerDisplay.textContent}\nErros cometidos: ${wrongAttempts}`);
+                    victoryTimeout = null;
+                }, 500);
+            }
+            
+            resetBoard();
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            wrongAttempts++;
+            attemptsDisplay.textContent = wrongAttempts;
+
+            mismatchTimeout = setTimeout(() => {
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                mismatchTimeout = null;
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            clearTimeout(mismatchTimeout);
+            clearTimeout(victoryTimeout);
+            timerInterval = null;
+            mismatchTimeout = null;
+            victoryTimeout = null;
+            gameStarted = false;
+            wrongAttempts = 0;
+            totalMatches = 0;
+            
+            timerDisplay.textContent = "00:00";
+            attemptsDisplay.textContent = "0";
+            
+            resetBoard();
+            createBoard();
+        }
+
+        window.addEventListener('buuro-language-changed', updateFoodCardNames);
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'buuro-language-v1' || event.key === null) updateFoodCardNames();
+        });
+
+        async function startBackgroundMusic() {
+            if (!music.paused) return;
+
+            try {
+                await music.play();
+                musicToggle.textContent = 'Pausar música';
+                musicToggle.setAttribute('aria-pressed', 'true');
+            } catch {
+                musicToggle.textContent = 'Tocar música';
+            }
+        }
+
+        musicToggle.addEventListener('click', () => {
+            if (music.paused) {
+                startBackgroundMusic();
+                return;
+            }
+
+            music.pause();
+            musicToggle.textContent = 'Tocar música';
+            musicToggle.setAttribute('aria-pressed', 'false');
+        });
+
+        music.addEventListener('play', () => {
+            musicToggle.textContent = 'Pausar música';
+            musicToggle.setAttribute('aria-pressed', 'true');
+        });
+
+        music.addEventListener('pause', () => {
+            musicToggle.textContent = 'Tocar música';
+            musicToggle.setAttribute('aria-pressed', 'false');
+        });
+
+        music.play().catch(() => {});
+
+        createBoard();
+    </script>
+</body>
+</html>

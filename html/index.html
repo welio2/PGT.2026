@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Forca JS</title>
+    <script src="../game-language.js"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../site-preferences.css">
+    <script src="../site-preferences.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Jogo da Forca</h1>
+        <p data-explanatory-text>Versão web independente. Clique nas letras, use a dica e tente adivinhar a palavra antes de ficar sem tentativas.</p>
+        <div id="forca" class="forca-status">Tentativas restantes: <span id="lives">6</span></div>
+        <p class="score-total">Pontos acumulados: <span data-score-total="forca">0</span></p>
+        
+        <div id="word-display" class="word-display"></div>
+
+        <div id="keyboard" class="keyboard"></div>
+
+        <div class="action-buttons">
+            <button id="music-toggle" class="reset-btn" type="button" aria-pressed="false">Ativar música</button>
+            <button id="reset-btn" class="reset-btn">Novo Jogo</button>
+            <button id="hint-btn" class="reset-btn">Mostrar Dica</button>
+            <a class="reset-btn menu-btn" href="../index.html?menu=1" target="_top">Voltar ao Menu</a>
+        </div>
+        <p class="hint-note" data-explanatory-text>Use o botão de dica apenas uma vez por rodada.</p>
+        <p id="message" class="message"></p>
+        <audio id="background-music" loop preload="metadata">
+            <source src="../Vivaldi The Summer Presto  Violin Sheet Music  Piano Accompaniment - fragherrnmaurer.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script src="../score-counter.js"></script>
+    <script>
+    (() => {
+        const languages = ['pt-BR', 'en', 'es', 'de', 'ja', 'ru', 'fr', 'it'];
+        const language = BuuroGameLanguage.language;
+        const languageIndex = languages.indexOf(language);
+        const wordBanks = [
+            [
+                ['COMPUTADOR', 'Máquina que processa dados e executa programas.'],
+                ['ROBÔ', 'Máquina que executa tarefas automaticamente.'],
+                ['PLANETA', 'Corpo celeste que orbita uma estrela.'],
+                ['MÚSICA', 'Arte dos sons organizados em ritmo e melodia.'],
+                ['FLORESTA', 'Grande área coberta por árvores.'],
+                ['BICICLETA', 'Veículo de duas rodas movido por pedais.'],
+                ['ESTRELA', 'Astro que produz luz própria.'],
+                ['OCEANO', 'Enorme massa de água salgada.']
+            ],
+            [
+                ['COMPUTER', 'A machine that processes data and runs programs.'],
+                ['ROBOT', 'A machine that can perform tasks automatically.'],
+                ['PLANET', 'A celestial body that orbits a star.'],
+                ['MUSIC', 'The art of arranging sounds into rhythm and melody.'],
+                ['FOREST', 'A large area covered with trees.'],
+                ['BICYCLE', 'A two-wheeled vehicle powered by pedals.'],
+                ['STAR', 'A celestial body that produces its own light.'],
+                ['OCEAN', 'A vast body of salt water.']
+            ],
+            [
+                ['ORDENADOR', 'Máquina que procesa datos y ejecuta programas.'],
+                ['ROBOT', 'Máquina que realiza tareas automáticamente.'],
+                ['PLANETA', 'Cuerpo celeste que orbita una estrella.'],
+                ['MÚSICA', 'Arte de organizar sonidos en ritmo y melodía.'],
+                ['BOSQUE', 'Gran extensión de terreno cubierta de árboles.'],
+                ['BICICLETA', 'Vehículo de dos ruedas impulsado por pedales.'],
+                ['ESTRELLA', 'Astro que produce luz propia.'],
+                ['OCÉANO', 'Enorme masa de agua salada.']
+            ],
+            [
+                ['COMPUTER', 'Eine Maschine, die Daten verarbeitet und Programme ausführt.'],
+                ['ROBOTER', 'Eine Maschine, die Aufgaben automatisch erledigen kann.'],
+                ['PLANET', 'Ein Himmelskörper, der einen Stern umkreist.'],
+                ['MUSIK', 'Die Kunst, Klänge zu Rhythmus und Melodie zu ordnen.'],
+                ['WALD', 'Ein großes, mit Bäumen bewachsenes Gebiet.'],
+                ['FAHRRAD', 'Ein zweirädriges Fahrzeug, das mit Pedalen angetrieben wird.'],
+                ['STERN', 'Ein Himmelskörper, der selbst Licht erzeugt.'],
+                ['OZEAN', 'Eine riesige Salzwassermasse.']
+            ],
+            [
+                ['コンピュータ', 'データを処理してプログラムを実行する機械。'],
+                ['ロボット', '作業を自動で行う機械。'],
+                ['ワクセイ', '恒星の周りを公転する天体。'],
+                ['オンガク', '音をリズムやメロディーに組み立てる芸術。'],
+                ['モリ', 'たくさんの木が生えている広い場所。'],
+                ['ジテンシャ', 'ペダルをこいで進む二輪の乗り物。'],
+                ['ホシ', '自ら光を放つ天体。'],
+                ['カイヨウ', '広大な塩水の集まり。']
+            ],
+            [
+                ['КОМПЬЮТЕР', 'Машина, которая обрабатывает данные и запускает программы.'],
+                ['РОБОТ', 'Машина, способная выполнять задачи автоматически.'],
+                ['ПЛАНЕТА', 'Небесное тело, обращающееся вокруг звезды.'],
+                ['МУЗЫКА', 'Искусство соединять звуки в ритм и мелодию.'],
+                ['ЛЕС', 'Большая территория, покрытая деревьями.'],
+                ['ВЕЛОСИПЕД', 'Двухколёсное транспортное средство с педалями.'],
+                ['ЗВЕЗДА', 'Небесное тело, излучающее собственный свет.'],
+                ['ОКЕАН', 'Огромное пространство солёной воды.']
+            ],
+            [
+                ['ORDINATEUR', 'Une machine qui traite des données et exécute des programmes.'],
+                ['ROBOT', 'Une machine capable d’effectuer des tâches automatiquement.'],
+                ['PLANÈTE', 'Un corps céleste qui orbite autour d’une étoile.'],
+                ['MUSIQUE', 'L’art d’organiser les sons en rythme et en mélodie.'],
+                ['FORÊT', 'Une vaste étendue couverte d’arbres.'],
+                ['VÉLO', 'Un véhicule à deux roues actionné par des pédales.'],
+                ['ÉTOILE', 'Un astre qui produit sa propre lumière.'],
+                ['OCÉAN', 'Une immense étendue d’eau salée.']
+            ],
+            [
+                ['COMPUTER', 'Una macchina che elabora dati ed esegue programmi.'],
+                ['ROBOT', 'Una macchina capace di svolgere attività automaticamente.'],
+                ['PIANETA', 'Un corpo celeste che orbita intorno a una stella.'],
+                ['MUSICA', 'L’arte di organizzare i suoni in ritmo e melodia.'],
+                ['FORESTA', 'Una vasta area ricoperta di alberi.'],
+                ['BICICLETTA', 'Un veicolo a due ruote azionato dai pedali.'],
+                ['STELLA', 'Un astro che emette luce propria.'],
+                ['OCEANO', 'Un’enorme distesa di acqua salata.']
+            ]
+        ][languageIndex];
+        const alphabet = [
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÂÊÔÃÕÇ',
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ',
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜẞ',
+            'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワンーァィゥェォャュョッガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ',
+            'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÇÉÈÊËÎÏÔÙÛÜŸ',
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÍÎÒÓÙÚ'
+        ][languageIndex];
+        const words = wordBanks.map(([word, hint]) => ({ word, hint }));
+        const strings = [
+            {
+                intro: 'Adivinhe a palavra antes de ficar sem tentativas.',
+                good: (letter) => `Boa! A letra ${letter} está na palavra.`,
+                wrong: (letter) => `Ops! A letra ${letter} não faz parte da palavra.`,
+                win: (word) => `🎉 Parabéns! Você venceu! A palavra era ${word}.`,
+                lose: (word) => `👻 Fim de jogo! A palavra era ${word}.`,
+                hint: (letter, clue) => `💡 Dica: a letra ${letter} foi revelada. ${clue}`,
+                noLetters: 'Nenhuma letra restante para revelar.',
+                musicOn: 'Pausar música',
+                musicOff: 'Ativar música',
+                musicError: 'Não foi possível carregar a música.'
+            },
+            {
+                intro: 'Guess the word before you run out of tries.',
+                good: (letter) => `Great! The letter ${letter} is in the word.`,
+                wrong: (letter) => `Oops! The letter ${letter} is not in the word.`,
+                win: (word) => `🎉 Congratulations! You won! The word was ${word}.`,
+                lose: (word) => `👻 Game over! The word was ${word}.`,
+                hint: (letter, clue) => `💡 Hint: the letter ${letter} was revealed. ${clue}`,
+                noLetters: 'There are no unrevealed letters.',
+                musicOn: 'Pause music',
+                musicOff: 'Enable music',
+                musicError: 'Could not load the music.'
+            },
+            {
+                intro: 'Adivina la palabra antes de quedarte sin intentos.',
+                good: (letter) => `¡Bien! La letra ${letter} está en la palabra.`,
+                wrong: (letter) => `¡Vaya! La letra ${letter} no está en la palabra.`,
+                win: (word) => `🎉 ¡Enhorabuena! Ganaste. La palabra era ${word}.`,
+                lose: (word) => `👻 Fin del juego. La palabra era ${word}.`,
+                hint: (letter, clue) => `💡 Pista: se reveló la letra ${letter}. ${clue}`,
+                noLetters: 'No quedan letras por revelar.',
+                musicOn: 'Pausar música',
+                musicOff: 'Activar música',
+                musicError: 'No se pudo cargar la música.'
+            },
+            {
+                intro: 'Errate das Wort, bevor dir die Versuche ausgehen.',
+                good: (letter) => `Richtig! Der Buchstabe ${letter} ist im Wort.`,
+                wrong: (letter) => `Leider falsch! Der Buchstabe ${letter} kommt nicht vor.`,
+                win: (word) => `🎉 Glückwunsch! Du hast gewonnen. Das Wort war ${word}.`,
+                lose: (word) => `👻 Spiel vorbei! Das Wort war ${word}.`,
+                hint: (letter, clue) => `💡 Hinweis: Der Buchstabe ${letter} wurde aufgedeckt. ${clue}`,
+                noLetters: 'Es gibt keine weiteren Buchstaben aufzudecken.',
+                musicOn: 'Musik pausieren',
+                musicOff: 'Musik aktivieren',
+                musicError: 'Die Musik konnte nicht geladen werden.'
+            },
+            {
+                intro: '回数がなくなる前に単語を当てましょう。',
+                good: (letter) => `正解！「${letter}」は単語に含まれています。`,
+                wrong: (letter) => `残念！「${letter}」は単語に含まれていません。`,
+                win: (word) => `🎉 おめでとう！正解です。答えは「${word}」でした。`,
+                lose: (word) => `👻 ゲーム終了。答えは「${word}」でした。`,
+                hint: (letter, clue) => `💡 ヒント：「${letter}」を公開しました。${clue}`,
+                noLetters: '公開できる文字はありません。',
+                musicOn: '音楽を一時停止',
+                musicOff: '音楽を有効にする',
+                musicError: '音楽を読み込めませんでした。'
+            },
+            {
+                intro: 'Угадайте слово, пока не закончились попытки.',
+                good: (letter) => `Верно! Буква ${letter} есть в слове.`,
+                wrong: (letter) => `Увы! Буквы ${letter} нет в слове.`,
+                win: (word) => `🎉 Поздравляем! Вы выиграли. Загаданное слово: ${word}.`,
+                lose: (word) => `👻 Игра окончена. Загаданное слово: ${word}.`,
+                hint: (letter, clue) => `💡 Подсказка: открыта буква ${letter}. ${clue}`,
+                noLetters: 'Не осталось букв для открытия.',
+                musicOn: 'Приостановить музыку',
+                musicOff: 'Включить музыку',
+                musicError: 'Не удалось загрузить музыку.'
+            },
+            {
+                intro: 'Trouvez le mot avant d’épuiser vos essais.',
+                good: (letter) => `Bravo ! La lettre ${letter} est dans le mot.`,
+                wrong: (letter) => `Dommage ! La lettre ${letter} ne figure pas dans le mot.`,
+                win: (word) => `🎉 Félicitations ! Vous avez gagné. Le mot était ${word}.`,
+                lose: (word) => `👻 Fin de partie ! Le mot était ${word}.`,
+                hint: (letter, clue) => `💡 Indice : la lettre ${letter} a été révélée. ${clue}`,
+                noLetters: 'Il ne reste aucune lettre à révéler.',
+                musicOn: 'Mettre la musique en pause',
+                musicOff: 'Activer la musique',
+                musicError: 'Impossible de charger la musique.'
+            },
+            {
+                intro: 'Indovina la parola prima di esaurire i tentativi.',
+                good: (letter) => `Bene! La lettera ${letter} è nella parola.`,
+                wrong: (letter) => `Ops! La lettera ${letter} non è nella parola.`,
+                win: (word) => `🎉 Complimenti! Hai vinto. La parola era ${word}.`,
+                lose: (word) => `👻 Fine del gioco. La parola era ${word}.`,
+                hint: (letter, clue) => `💡 Suggerimento: è stata rivelata la lettera ${letter}. ${clue}`,
+                noLetters: 'Non ci sono altre lettere da rivelare.',
+                musicOn: 'Metti in pausa la musica',
+                musicOff: 'Attiva la musica',
+                musicError: 'Impossibile caricare la musica.'
+            }
+        ][languageIndex];
+
+        let selectedWord = '';
+        let selectedHint = '';
+        let guessedLetters = [];
+        let lives = 6;
+        let hintUsed = false;
+        let gameOver = false;
+        const wordDisplay = document.getElementById('word-display');
+        const keyboard = document.getElementById('keyboard');
+        const livesDisplay = document.getElementById('lives');
+        const message = document.getElementById('message');
+        const resetBtn = document.getElementById('reset-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const musicToggleBtn = document.getElementById('music-toggle');
+        const backgroundMusic = document.getElementById('background-music');
+        backgroundMusic.volume = 0.35;
+
+        function chooseWord() {
+            const choice = words[Math.floor(Math.random() * words.length)];
+            selectedWord = choice.word.toUpperCase();
+            selectedHint = choice.hint;
+        }
+
+        function getDisplayWord() {
+            return [...selectedWord].map((letter) => guessedLetters.includes(letter) ? letter : '_').join(' ');
+        }
+
+        function updateUI() {
+            wordDisplay.innerText = getDisplayWord();
+            livesDisplay.innerText = lives;
+            hintBtn.disabled = hintUsed || gameOver;
+        }
+
+        function setButtonStyle(letter, correct) {
+            const button = [...keyboard.children].find((item) => item.innerText === letter);
+            if (!button) return;
+            button.disabled = true;
+            button.classList.add(correct ? 'correct' : 'wrong');
+        }
+
+        function completeWin() {
+            if (gameOver) return;
+            message.innerText = strings.win(selectedWord);
+            gameOver = true;
+            GameScoreCounter.add('forca', 100 + lives * 25);
+            updateUI();
+            disableButtons();
+        }
+
+        function disableButtons() {
+            keyboard.querySelectorAll('button').forEach((button) => { button.disabled = true; });
+        }
+
+        function handleGuess(letter, button) {
+            if (gameOver || button.disabled) return;
+            if (selectedWord.includes(letter)) {
+                guessedLetters.push(letter);
+                setButtonStyle(letter, true);
+                message.innerText = strings.good(letter);
+            } else {
+                lives -= 1;
+                setButtonStyle(letter, false);
+                message.innerText = strings.wrong(letter);
+            }
+            updateUI();
+            if (!getDisplayWord().includes('_')) {
+                completeWin();
+            } else if (lives <= 0) {
+                gameOver = true;
+                message.innerText = strings.lose(selectedWord);
+                hintBtn.disabled = true;
+                disableButtons();
+            }
+        }
+
+        function createKeyboard() {
+            keyboard.innerHTML = '';
+            [...new Set(alphabet)].forEach((letter) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.innerText = letter;
+                button.addEventListener('click', () => handleGuess(letter, button));
+                keyboard.appendChild(button);
+            });
+        }
+
+        function initGame() {
+            guessedLetters = [];
+            lives = 6;
+            hintUsed = false;
+            gameOver = false;
+            message.innerText = strings.intro;
+            chooseWord();
+            createKeyboard();
+            updateUI();
+        }
+
+        hintBtn.addEventListener('click', () => {
+            if (hintUsed || gameOver) return;
+            const remaining = [...selectedWord].filter((letter) => !guessedLetters.includes(letter));
+            if (!remaining.length) {
+                message.innerText = strings.noLetters;
+                return;
+            }
+            const letter = remaining[Math.floor(Math.random() * remaining.length)];
+            guessedLetters.push(letter);
+            hintUsed = true;
+            message.innerText = strings.hint(letter, selectedHint);
+            setButtonStyle(letter, true);
+            updateUI();
+            if (!getDisplayWord().includes('_')) completeWin();
+        });
+
+        resetBtn.addEventListener('click', initGame);
+        function updateMusicToggle() {
+            const isPlaying = !backgroundMusic.paused;
+            musicToggleBtn.textContent = isPlaying ? strings.musicOn : strings.musicOff;
+            musicToggleBtn.setAttribute('aria-pressed', String(isPlaying));
+        }
+        musicToggleBtn.addEventListener('click', () => {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play().then(updateMusicToggle).catch(() => { message.innerText = strings.musicError; });
+            } else {
+                backgroundMusic.pause();
+                updateMusicToggle();
+            }
+        });
+        backgroundMusic.addEventListener('play', updateMusicToggle);
+        backgroundMusic.addEventListener('pause', updateMusicToggle);
+        initGame();
+    })();
+    </script>
+</body>
+</html>
+

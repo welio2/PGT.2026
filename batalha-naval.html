@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batalha Naval</title>
+  <script src="game-language.js" defer></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #164e63, #0f172a 58%);
+    }
+
+    .game {
+      width: min(1020px, 100%);
+      padding: clamp(18px, 4vw, 34px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.92);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .topbar a {
+      color: #bae6fd;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #38bdf8;
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+    }
+
+    .instructions {
+      margin: 0 auto 16px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    #status {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 20px;
+      padding: 10px 16px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #f8fafc;
+      font-weight: 700;
+    }
+
+    .achievement-notice {
+      margin: -10px auto 20px;
+      padding: 9px 14px;
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      border-radius: 8px;
+      background: rgba(120, 83, 10, 0.28);
+      color: #fde68a;
+      font-weight: 700;
+    }
+
+    .achievement-notice[hidden] { display: none; }
+
+    .boards-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(18px, 4vw, 40px);
+    }
+
+    .board-wrapper h2 {
+      margin: 0 0 10px;
+      color: #cbd5e1;
+      font-size: 1.1rem;
+    }
+
+    .grid {
+      --cell-size: clamp(24px, 7vw, 40px);
+      display: grid;
+      position: relative;
+      grid-template-columns: repeat(10, var(--cell-size));
+      grid-template-rows: repeat(10, var(--cell-size));
+      gap: 1px;
+      padding: 4px;
+      border: 1px solid rgba(15, 75, 85, 0.95);
+      border-radius: 7px;
+      background-color: #0369a1;
+      background-image:
+        radial-gradient(ellipse at 25% 35%, rgba(103, 232, 249, 0.42) 0 2%, transparent 30%),
+        radial-gradient(ellipse at 70% 65%, rgba(14, 165, 233, 0.44) 0 4%, transparent 34%),
+        linear-gradient(135deg, #0e7490 0%, #0369a1 48%, #164e63 100%);
+      background-size: 260px 230px, 330px 280px, 100% 100%;
+      animation: ocean-flow 18s linear infinite;
+      overflow: hidden;
+    }
+
+    @keyframes ocean-flow {
+      to { background-position: 260px 230px, -330px 280px, 0 0; }
+    }
+
+    .water-video {
+      position: absolute;
+      inset: 4px;
+      z-index: 0;
+      width: calc(100% - 8px);
+      height: calc(100% - 8px);
+      border-radius: 4px;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .grid.water-fallback .water-video { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grid { animation: none; }
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 1px;
+      background: rgba(2, 45, 70, 0.18);
+      color: #fff;
+      font-size: clamp(0.7rem, 2.5vw, 1rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color 140ms ease, transform 140ms ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    #computer-board .cell:not(:disabled):hover {
+      background: rgba(56, 189, 248, 0.58);
+      transform: scale(1.08);
+    }
+
+    #player-board .cell { cursor: default; }
+    .cell.hit { background: rgba(220, 38, 38, 0.96); }
+    #player-board .cell.hit,
+    #computer-board .cell.hit { z-index: 3; }
+    .cell.miss { background: rgba(30, 41, 59, 0.86); color: #cbd5e1; }
+    .cell:disabled { opacity: 1; }
+
+    .ship-model {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+      filter: drop-shadow(0 2px 2px rgba(2, 6, 23, 0.7));
+    }
+
+    .ship-model.sunk { z-index: 4; }
+
+    .ship-model svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .game-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .restart {
+      min-height: 44px;
+      margin-top: 0;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 7px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .restart:hover { background: #7dd3fc; }
+    .restart:disabled { cursor: not-allowed; opacity: 0.7; }
+
+    .music-credit {
+      margin: 10px 0 0;
+      color: #94a3b8;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 10px; }
+      .topbar { font-size: 0.9rem; }
+      .boards-container { gap: 20px 12px; }
+      .board-wrapper { max-width: 100%; }
+    }
+  </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+  <main class="game">
+    <div class="topbar">
+      <a href="index.html?menu=1#menu-container">← Voltar ao menu</a>
+      <span aria-hidden="true">⚓</span>
+    </div>
+
+    <h1>🚢 Batalha Naval</h1>
+    <p class="instructions" data-explanatory-text>Encontre todos os navios inimigos. Ao acertar, você joga novamente; ao errar, a vez passa para o computador.</p>
+    <div id="status" role="status" aria-live="polite">Sua vez! Escolha uma célula nas águas inimigas.</div>
+    <div id="achievement-notice" class="achievement-notice" role="status" aria-live="polite" hidden></div>
+
+    <div class="boards-container">
+      <section class="board-wrapper" aria-labelledby="player-title">
+        <h2 id="player-title">Sua Frota</h2>
+        <div id="player-board" class="grid" aria-label="Tabuleiro da sua frota">
+          <video class="water-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1">
+            <source src="videos/3D%20to%202D%20Ocean%20Animation%20-%20RubyMaky%20%281080p%2C%20h264%29.mp4" type="video/mp4">
+          </video>
+        </div>
+      </section>
+      <section class="board-wrapper" aria-labelledby="computer-title">
+        <h2 id="computer-title">Águas Inimigas</h2>
+        <div id="computer-board" class="grid" aria-label="Tabuleiro inimigo, selecione uma célula para atacar">
+          <video class="water-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1">
+            <source src="videos/3D%20to%202D%20Ocean%20Animation%20-%20RubyMaky%20%281080p%2C%20h264%29.mp4" type="video/mp4">
+          </video>
+        </div>
+      </section>
+    </div>
+
+    <div class="game-controls">
+      <button class="restart" id="restart-button" type="button">Reiniciar jogo</button>
+      <button class="restart" id="music-toggle" type="button" aria-pressed="false">Tocar trilha sonora</button>
+    </div>
+    <p class="music-credit">Trilha: Ahrix - Nova (NoCopyrightSounds), usada sob licença.</p>
+    <audio id="background-music" loop preload="none">
+      <source src="sons/Ahrix%20-%20Nova%20%5BDeleted%20NCS%20Release%5D%20-%20Deleted%20NCS%20-%20Circle%20Spectrum.mp3" type="audio/mpeg">
+    </audio>
+  </main>
+
+  <script>
+    const BOARD_SIZE = 10;
+    const FLEET = [
+      { name: 'Porta-aviões', size: 5, type: 'carrier' },
+      { name: 'Encouraçado', size: 4, type: 'battleship' },
+      { name: 'Destroyer', size: 3, type: 'destroyer' },
+      { name: 'Submarino', size: 3, type: 'submarine' },
+      { name: 'Patrulha', size: 2, type: 'patrol' }
+    ];
+    const BATTLE_ACHIEVEMENTS = [
+      { id: 'first-hit', name: 'Primeiro contato naval', description: 'Acerte um navio inimigo pela primeira vez.' },
+      { id: 'first-sunk', name: 'Caçador de navios', description: 'Afunde seu primeiro navio inimigo.' },
+      { id: 'first-victory', name: 'Almirante dos mares', description: 'Vença sua primeira batalha naval.' },
+      { id: 'perfect-victory', name: 'Mira perfeita', description: 'Vença sem errar nenhum disparo.' },
+      { id: 'flawless-victory', name: 'Frota intacta', description: 'Vença sem nenhum navio seu ser atingido.' },
+      { id: 'five-wins', name: 'Lenda naval', description: 'Vença cinco batalhas navais.' }
+    ];
+    const BATTLE_PROGRESS_STORAGE_KEY = 'buuro-battleship-progress-v1';
+    const TOTAL_SHIP_CELLS = FLEET.reduce((total, ship) => total + ship.size, 0);
+    let shipSvgId = 0;
+    const SHIP_DETAILS = {
+      carrier: '<path d="M7 32h166l-13 12H28L12 39z" fill="url(#ship-hull)" stroke="#d5e0e8" stroke-width="1.5"/><path d="M20 42q58 5 132 0l-8 4H29z" fill="#b93442"/><path d="M13 29h154l-7 4H10z" fill="#a9bac5"/><path d="M20 27h141v2H20z" fill="#dce5eb"/><path d="M132 27V17h14v10m-11-10v-5h8v5m-3-5V7m-3 5-6-5" fill="#607789" stroke="#e1e9ee" stroke-width="1.2"/><path d="M137 19h8m-8 3h8" stroke="#dce5eb" stroke-width="1"/><path d="M34 25h88" stroke="#f0c85a" stroke-width="1.4" stroke-dasharray="7 3"/><path d="M54 19l7-4 7 4-7 2zM77 19l6-3 6 3-6 2z" fill="#edf3f7" stroke="#526b7b" stroke-width=".8"/><path d="M60 18v4m-2-2h6m17-2v4m-2-2h5" stroke="#526b7b" stroke-width=".8"/><path d="M22 31h137" stroke="#72899a" stroke-width=".8"/>',
+      battleship: '<path d="M7 32h166l-13 12H28L12 39z" fill="url(#ship-hull)" stroke="#d5e0e8" stroke-width="1.5"/><path d="M20 42q58 5 132 0l-8 4H29z" fill="#b93442"/><path d="M13 29h154l-7 4H10z" fill="#a9bac5"/><path d="M79 29V17h26v12m-21-12v-6h15v6m-8-6V6m-8 6-7-6m25 6 7-6" fill="#607789" stroke="#e1e9ee" stroke-width="1.2"/><path d="M82 20h20m-20 3h20m-17-9h13" stroke="#dce5eb" stroke-width="1.1"/><path d="M34 28v-5h13v5m-8-5v-5m3 5v-5m55 6h12v3H93z" fill="#8196a5" stroke="#e1e9ee" stroke-width="1"/><path d="M47 24h8m50 1h10" stroke="#dce5eb" stroke-width="1.3"/><path d="M29 22h-9m9 2h-8m96-2h12v2h-12z" fill="#8196a5" stroke="#dce5eb" stroke-width=".8"/><circle cx="27" cy="35" r="1" fill="#e1e9ee"/><circle cx="41" cy="36" r="1" fill="#e1e9ee"/><circle cx="139" cy="35" r="1" fill="#e1e9ee"/>',
+      destroyer: '<path d="M8 32h164l-14 12H27L11 39z" fill="url(#ship-hull)" stroke="#d5e0e8" stroke-width="1.5"/><path d="M20 42q58 5 132 0l-8 4H29z" fill="#b93442"/><path d="M14 29h151l-8 4H11z" fill="#a9bac5"/><path d="M76 29V17h22v12m-18-12v-7h13v7m-6-7V6m-6 4-7-5m19 5 7-5" fill="#607789" stroke="#e1e9ee" stroke-width="1.2"/><path d="M80 20h14m-14 3h14m-12-8h10" stroke="#dce5eb" stroke-width="1"/><path d="M37 28v-5h13v5m-7-5v-4m46 4h20v4H89z" fill="#8196a5" stroke="#e1e9ee" stroke-width=".9"/><path d="M99 23v-3h3v3m4-3h3v3m-3-5v-2m-5 2h8" fill="#d7e2e9" stroke="#607789" stroke-width=".8"/><path d="M51 25h9m51 0h8m-89 5h118" stroke="#dce5eb" stroke-width=".9"/><circle cx="67" cy="27" r="1" fill="#e7c96a"/>',
+      submarine: '<path d="M7 31q9-15 38-17h76q36 2 52 17-15 14-50 15H48Q19 44 7 31z" fill="url(#ship-hull)" stroke="#d5e0e8" stroke-width="1.5"/><path d="M23 39q52 8 125 0l-13 6H49q-18-1-26-6z" fill="#b93442"/><path d="M79 17V9h24v8m-17-8V5h11v4m-5-4V2m-5 3-7-4m20 4 6-4" fill="#607789" stroke="#e1e9ee" stroke-width="1.2"/><path d="M13 30h146" stroke="#c9d7e0" stroke-width="1"/><path d="M39 25h3m12-2h3m13 0h3m14 0h3m14 1h3m13 0h3m13 2h3" stroke="#e4edf2" stroke-width="1.6"/><path d="M7 31 2 26v11m151-7 9-7v17" fill="#607789" stroke="#d5e0e8" stroke-width="1"/><path d="M89 9V4m8 5V3" stroke="#dce5eb" stroke-width="1"/>',
+      patrol: '<path d="M9 32h163l-15 12H27L11 39z" fill="url(#ship-hull)" stroke="#d5e0e8" stroke-width="1.5"/><path d="M21 42q58 5 130 0l-8 4H30z" fill="#b93442"/><path d="M15 29h150l-8 4H12z" fill="#a9bac5"/><path d="M75 29V18h24v11m-19-11v-7h14v7m-7-7V6m-6 5-6-5m19 5 6-5" fill="#607789" stroke="#e1e9ee" stroke-width="1.2"/><path d="M79 21h16m-16 3h16m-13-9h10" stroke="#dce5eb" stroke-width="1"/><path d="M39 28v-4h13v4m49 0h17v3h-17z" fill="#8196a5" stroke="#e1e9ee" stroke-width=".9"/><path d="M56 26h8m55 0h8m-108 4h128" stroke="#dce5eb" stroke-width=".9"/><path d="M48 23h5m-5 2h5m76 0h5" stroke="#e7c96a" stroke-width="1"/>'
+    };
+    const SURFACE_DETAILS = '<path d="M19 29h139" stroke="#edf4f7" stroke-opacity=".65" stroke-width=".8"/><path d="M24 38q54 3 121 0" fill="none" stroke="#b8c8d2" stroke-width=".8"/><g fill="#dce6ec"><circle cx="31" cy="36" r="1.1"/><circle cx="43" cy="37" r="1.1"/><circle cx="55" cy="37" r="1.1"/><circle cx="67" cy="37" r="1.1"/><circle cx="79" cy="37" r="1.1"/><circle cx="91" cy="37" r="1.1"/><circle cx="103" cy="37" r="1.1"/><circle cx="115" cy="37" r="1.1"/><circle cx="127" cy="37" r="1.1"/><circle cx="139" cy="36" r="1.1"/></g><path d="M12 47h37m6 0h24m8 0h31m8 0h38" stroke="#8bd3e8" stroke-opacity=".65" stroke-width=".8"/>';
+    const SUBMARINE_DETAILS = '<path d="M17 31h145" stroke="#dce8ee" stroke-opacity=".72" stroke-width=".9"/><path d="M25 35q57 7 125 0" fill="none" stroke="#b8c8d2" stroke-width=".8"/><g fill="#dce6ec"><circle cx="35" cy="32" r="1.1"/><circle cx="50" cy="32" r="1.1"/><circle cx="65" cy="32" r="1.1"/><circle cx="80" cy="32" r="1.1"/><circle cx="95" cy="32" r="1.1"/><circle cx="110" cy="32" r="1.1"/><circle cx="125" cy="32" r="1.1"/><circle cx="140" cy="32" r="1.1"/></g><path d="M8 47h35m8 0h31m9 0h26m9 0h35" stroke="#8bd3e8" stroke-opacity=".65" stroke-width=".8"/>';
+    const statusEl = document.getElementById('status');
+    const achievementNoticeEl = document.getElementById('achievement-notice');
+    const playerBoardEl = document.getElementById('player-board');
+    const computerBoardEl = document.getElementById('computer-board');
+    const musicToggle = document.getElementById('music-toggle');
+    const backgroundMusic = document.getElementById('background-music');
+    const waterVideos = document.querySelectorAll('.water-video');
+    let musicLoadTimeout = null;
+    let playerGrid = [];
+    let computerGrid = [];
+    let playerShips = [];
+    let computerShips = [];
+    let playerHits = 0;
+    let computerHits = 0;
+    let playerMisses = 0;
+    let gameOver = false;
+    let computerThinking = false;
+    let computerTimeout = null;
+    let battleProgress = loadBattleProgress();
+    const pendingAchievementNotices = [];
+    let achievementNoticeTimer = null;
+
+    function loadBattleProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(BATTLE_PROGRESS_STORAGE_KEY) || '{}');
+        const unlocked = Array.isArray(saved.unlocked)
+          ? saved.unlocked.filter((id) => BATTLE_ACHIEVEMENTS.some((achievement) => achievement.id === id))
+          : [];
+        return {
+          unlocked,
+          wins: Number.isSafeInteger(saved.wins) && saved.wins >= 0 ? saved.wins : 0
+        };
+      } catch (error) {
+        console.error('Não foi possível carregar as conquistas navais.', error);
+        return { unlocked: [], wins: 0 };
+      }
+    }
+
+    function saveBattleProgress() {
+      try {
+        localStorage.setItem(BATTLE_PROGRESS_STORAGE_KEY, JSON.stringify(battleProgress));
+      } catch (error) {
+        console.error('Não foi possível salvar as conquistas navais.', error);
+      }
+    }
+
+    function showNextAchievementNotice() {
+      if (achievementNoticeTimer !== null || pendingAchievementNotices.length === 0) return;
+      const achievement = pendingAchievementNotices.shift();
+      achievementNoticeEl.textContent = `🏅 Conquista desbloqueada: ${achievement.name} — ${achievement.description}`;
+      achievementNoticeEl.hidden = false;
+      achievementNoticeTimer = window.setTimeout(() => {
+        achievementNoticeEl.hidden = true;
+        achievementNoticeEl.textContent = '';
+        achievementNoticeTimer = null;
+        showNextAchievementNotice();
+      }, 4000);
+    }
+
+    function unlockBattleAchievement(id) {
+      if (battleProgress.unlocked.includes(id)) return;
+      const achievement = BATTLE_ACHIEVEMENTS.find((item) => item.id === id);
+      if (!achievement) throw new Error(`Conquista naval desconhecida: ${id}`);
+
+      battleProgress.unlocked.push(id);
+      saveBattleProgress();
+      pendingAchievementNotices.push(achievement);
+      showNextAchievementNotice();
+    }
+
+    function recordPlayerVictory() {
+      battleProgress.wins++;
+      saveBattleProgress();
+      unlockBattleAchievement('first-victory');
+      if (playerMisses === 0) unlockBattleAchievement('perfect-victory');
+      if (computerHits === 0) unlockBattleAchievement('flawless-victory');
+      if (battleProgress.wins >= 5) unlockBattleAchievement('five-wins');
+    }
+
+    waterVideos.forEach((video) => {
+      const board = video.closest('.grid');
+      const showFallback = () => board.classList.add('water-fallback');
+
+      video.addEventListener('error', () => {
+        showFallback();
+        statusEl.textContent = 'O vídeo de água não carregou; exibindo uma animação alternativa.';
+      });
+      video.addEventListener('loadeddata', () => board.classList.remove('water-fallback'));
+      window.setTimeout(() => {
+        if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) showFallback();
+      }, 1200);
+    });
+
+    function toggleMusic() {
+      if (!backgroundMusic.paused) {
+        window.clearTimeout(musicLoadTimeout);
+        musicLoadTimeout = null;
+        backgroundMusic.pause();
+        musicToggle.textContent = 'Tocar trilha sonora';
+        musicToggle.setAttribute('aria-pressed', 'false');
+        return;
+      }
+
+      musicToggle.disabled = true;
+      musicLoadTimeout = window.setTimeout(() => {
+        musicLoadTimeout = null;
+        if (backgroundMusic.paused || backgroundMusic.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+          backgroundMusic.pause();
+          musicToggle.disabled = false;
+          musicToggle.textContent = 'Tocar trilha sonora';
+          musicToggle.setAttribute('aria-pressed', 'false');
+          statusEl.textContent = 'A trilha não carregou. Confira o arquivo ou abra o jogo por um servidor local.';
+        }
+      }, 10000);
+      backgroundMusic.play().then(() => {
+        window.clearTimeout(musicLoadTimeout);
+        musicLoadTimeout = null;
+        if (backgroundMusic.paused) return;
+        musicToggle.disabled = false;
+        musicToggle.textContent = 'Pausar trilha sonora';
+        musicToggle.setAttribute('aria-pressed', 'true');
+      }).catch(() => {
+        window.clearTimeout(musicLoadTimeout);
+        musicLoadTimeout = null;
+        musicToggle.disabled = false;
+        musicToggle.textContent = 'Tocar trilha sonora';
+        musicToggle.setAttribute('aria-pressed', 'false');
+        statusEl.textContent = 'A trilha não carregou. Confira o arquivo ou abra o jogo por um servidor local.';
+      });
+    }
+
+    function createEmptyGrid() {
+      return Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
+    }
+
+    function canPlaceShip(grid, row, col, size, horizontal) {
+      if (horizontal && col + size > BOARD_SIZE) return false;
+      if (!horizontal && row + size > BOARD_SIZE) return false;
+
+      for (let offset = 0; offset < size; offset++) {
+        const shipRow = horizontal ? row : row + offset;
+        const shipCol = horizontal ? col + offset : col;
+        if (grid[shipRow][shipCol] !== 0) return false;
+      }
+      return true;
+    }
+
+    function placeShipsRandomly(grid) {
+      const ships = [];
+      for (const model of FLEET) {
+        const { size } = model;
+        let placed = false;
+        for (let attempt = 0; attempt < 1000 && !placed; attempt++) {
+          const horizontal = Math.random() < 0.5;
+          const row = Math.floor(Math.random() * BOARD_SIZE);
+          const col = Math.floor(Math.random() * BOARD_SIZE);
+          if (!canPlaceShip(grid, row, col, size, horizontal)) continue;
+
+          for (let offset = 0; offset < size; offset++) {
+            const shipRow = horizontal ? row : row + offset;
+            const shipCol = horizontal ? col + offset : col;
+            grid[shipRow][shipCol] = 1;
+          }
+          ships.push({ ...model, row, col, horizontal });
+          placed = true;
+        }
+
+        if (!placed) return null;
+      }
+      return ships;
+    }
+
+    function createFleetGrid() {
+      while (true) {
+        const grid = createEmptyGrid();
+        const ships = placeShipsRandomly(grid);
+        if (ships) return { grid, ships };
+      }
+    }
+
+    function shipSvg(ship) {
+      const vertical = !ship.horizontal;
+      const viewBox = vertical ? '0 0 52 180' : '0 0 180 52';
+      const transform = vertical ? 'translate(0 180) rotate(-90)' : '';
+      const hullGradientId = `ship-hull-${++shipSvgId}`;
+      const gradients = `<defs><linearGradient id="${hullGradientId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8199aa"/><stop offset=".48" stop-color="#526d80"/><stop offset="1" stop-color="#293b4b"/></linearGradient></defs>`;
+      const details = SHIP_DETAILS[ship.type].replace(/url\(#ship-hull\)/g, `url(#${hullGradientId})`);
+      const finishDetails = ship.type === 'submarine' ? SUBMARINE_DETAILS : SURFACE_DETAILS;
+      return `<svg viewBox="${viewBox}" preserveAspectRatio="none" aria-hidden="true">${gradients}<g transform="${transform}">${details}${finishDetails}</g></svg>`;
+    }
+
+    function isShipSunk(ship, grid) {
+      for (let offset = 0; offset < ship.size; offset++) {
+        const row = ship.horizontal ? ship.row : ship.row + offset;
+        const col = ship.horizontal ? ship.col + offset : ship.col;
+        if (grid[row][col] !== 2) return false;
+      }
+      return true;
+    }
+
+    function renderShipModels(ships, grid, boardEl, showAll) {
+      for (const ship of ships) {
+        const sunk = isShipSunk(ship, grid);
+        if (!showAll && !sunk) continue;
+
+        const model = document.createElement('div');
+        model.className = `ship-model${sunk && !showAll ? ' sunk' : ''}`;
+        model.style.gridColumn = `${ship.col + 1} / span ${ship.horizontal ? ship.size : 1}`;
+        model.style.gridRow = `${ship.row + 1} / span ${ship.horizontal ? 1 : ship.size}`;
+        model.setAttribute('role', 'img');
+        model.setAttribute('aria-label', `${ship.name}${sunk ? ', afundado' : ''}`);
+        model.innerHTML = shipSvg(ship);
+        boardEl.appendChild(model);
+      }
+    }
+
+    function createCell(row, col, isPlayerBoard) {
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell';
+      cell.setAttribute('aria-label', `${String.fromCharCode(65 + row)}${col + 1}`);
+      const value = (isPlayerBoard ? playerGrid : computerGrid)[row][col];
+
+      if (isPlayerBoard && value === 1) {
+        cell.classList.add('ship');
+        cell.setAttribute('aria-label', `${cell.getAttribute('aria-label')}, navio`);
+      } else if (value === 2) {
+        cell.classList.add('hit');
+        cell.textContent = '💥';
+        cell.setAttribute('aria-label', `${cell.getAttribute('aria-label')}, acerto`);
+      } else if (value === 3) {
+        cell.classList.add('miss');
+        cell.textContent = '•';
+        cell.setAttribute('aria-label', `${cell.getAttribute('aria-label')}, água`);
+      }
+
+      if (!isPlayerBoard) {
+        cell.disabled = gameOver || computerThinking || value === 2 || value === 3;
+        cell.addEventListener('click', () => handlePlayerAttack(row, col));
+      } else {
+        cell.disabled = true;
+      }
+      return cell;
+    }
+
+    function renderBoards() {
+      playerBoardEl.querySelectorAll('.cell, .ship-model').forEach((element) => element.remove());
+      computerBoardEl.querySelectorAll('.cell, .ship-model').forEach((element) => element.remove());
+      for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+          playerBoardEl.appendChild(createCell(row, col, true));
+          computerBoardEl.appendChild(createCell(row, col, false));
+        }
+      }
+      renderShipModels(playerShips, playerGrid, playerBoardEl, true);
+      renderShipModels(computerShips, computerGrid, computerBoardEl, false);
+    }
+
+    function findShipAt(ships, row, col) {
+      return ships.find((ship) => {
+        const offset = ship.horizontal ? col - ship.col : row - ship.row;
+        return ship.horizontal
+          ? row === ship.row && offset >= 0 && offset < ship.size
+          : col === ship.col && offset >= 0 && offset < ship.size;
+      });
+    }
+
+    function handlePlayerAttack(row, col) {
+      if (gameOver || computerThinking) return;
+      const value = computerGrid[row][col];
+      if (value === 2 || value === 3) return;
+
+      if (value === 1) {
+        computerGrid[row][col] = 2;
+        playerHits++;
+        unlockBattleAchievement('first-hit');
+        const ship = findShipAt(computerShips, row, col);
+        const sunk = isShipSunk(ship, computerGrid);
+        statusEl.textContent = sunk
+          ? `🎯 Você afundou o ${ship.name} inimigo! Jogue novamente.`
+          : '🎯 Acertou um navio inimigo! Jogue novamente.';
+        if (sunk) unlockBattleAchievement('first-sunk');
+      } else {
+        computerGrid[row][col] = 3;
+        playerMisses++;
+        statusEl.textContent = '🌊 Tiro na água... Vez do inimigo.';
+      }
+      renderBoards();
+
+      if (playerHits === TOTAL_SHIP_CELLS) {
+        recordPlayerVictory();
+        finishGame('🏆 Vitória! Você afundou toda a frota inimiga!');
+        return;
+      }
+
+      if (value === 1) return;
+
+      computerThinking = true;
+      renderBoards();
+      computerTimeout = setTimeout(computerTurn, 450);
+    }
+
+    function computerTurn() {
+      computerTimeout = null;
+      if (gameOver) return;
+
+      const availableCells = [];
+      for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+          if (playerGrid[row][col] !== 2 && playerGrid[row][col] !== 3) {
+            availableCells.push([row, col]);
+          }
+        }
+      }
+
+      if (!availableCells.length) {
+        finishGame('🏆 Você venceu! O computador não tem mais alvos.');
+        return;
+      }
+
+      const [row, col] = availableCells[Math.floor(Math.random() * availableCells.length)];
+      const hit = playerGrid[row][col] === 1;
+      if (hit) {
+        playerGrid[row][col] = 2;
+        computerHits++;
+        const ship = findShipAt(playerShips, row, col);
+        statusEl.textContent = isShipSunk(ship, playerGrid)
+          ? `🔥 O inimigo afundou seu ${ship.name} e joga novamente!`
+          : '🔥 O inimigo acertou um navio e joga novamente!';
+      } else {
+        playerGrid[row][col] = 3;
+        statusEl.textContent = '💨 O inimigo errou! Sua vez.';
+      }
+      computerThinking = hit;
+      renderBoards();
+
+      if (computerHits === TOTAL_SHIP_CELLS) {
+        finishGame('💀 Fim de jogo! O computador afundou sua frota.');
+        return;
+      }
+
+      if (hit) computerTimeout = setTimeout(computerTurn, 450);
+    }
+
+    function finishGame(message) {
+      gameOver = true;
+      computerThinking = false;
+      clearTimeout(computerTimeout);
+      computerTimeout = null;
+      statusEl.textContent = message;
+      renderBoards();
+    }
+
+    function initGame() {
+      clearTimeout(computerTimeout);
+      computerTimeout = null;
+      const playerFleet = createFleetGrid();
+      const computerFleet = createFleetGrid();
+      playerGrid = playerFleet.grid;
+      playerShips = playerFleet.ships;
+      computerGrid = computerFleet.grid;
+      computerShips = computerFleet.ships;
+      playerHits = 0;
+      computerHits = 0;
+      playerMisses = 0;
+      gameOver = false;
+      computerThinking = false;
+      statusEl.textContent = 'Sua vez! Escolha uma célula nas águas inimigas.';
+      renderBoards();
+    }
+
+    document.getElementById('restart-button').addEventListener('click', initGame);
+    musicToggle.addEventListener('click', toggleMusic);
+    initGame();
+  </script>
+</body>
+</html>

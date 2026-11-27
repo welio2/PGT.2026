@@ -1,0 +1,3 @@
+html.hide-explanatory-text [data-explanatory-text] {
+    display: none !important;
+}

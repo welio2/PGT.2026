@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acerte o Famoso</title>
+    <script src="game-language.js" defer></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --background: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #cbd5e1;
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: clamp(8px, 2vh, 18px);
+            display: grid;
+            place-items: center;
+            color: var(--text);
+            background: radial-gradient(circle at top, #1d3557, var(--background) 55%);
+        }
+
+        .game-card {
+            width: min(100%, 720px);
+            padding: clamp(14px, 2vw, 22px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: rgba(30, 41, 59, 0.96);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            text-align: center;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            color: var(--muted);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            color: #a5b4fc;
+            font-size: clamp(1.7rem, 5vw, 2.3rem);
+        }
+
+        .intro {
+            margin: 0 0 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .score-pill,
+        .round-pill {
+            padding: 8px 13px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: #0f172a;
+            white-space: nowrap;
+        }
+
+        .music-toggle {
+            color: #e0e7ff;
+            background: #334155;
+            white-space: nowrap;
+        }
+
+        .music-toggle[aria-pressed="true"] {
+            background: #4338ca;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            clip-path: inset(50%);
+            border: 0;
+        }
+
+        .image-frame {
+            width: min(100%, 360px);
+            height: min(32vh, 290px);
+            margin: 0 auto 12px;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            border-radius: 16px;
+            background: #0f172a;
+        }
+
+        #celeb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: blur(18px);
+            transition: filter 350ms ease;
+        }
+
+        .attempts {
+            margin: 0 0 10px;
+            color: #fde68a;
+            font-weight: 700;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        button,
+        .link-button {
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: filter 150ms ease, transform 150ms ease, background 150ms ease;
+        }
+
+        button:hover:not(:disabled),
+        .link-button:hover {
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+        }
+
+        button:focus-visible,
+        .link-button:focus-visible {
+            outline: 3px solid #facc15;
+            outline-offset: 3px;
+        }
+
+        .option-btn {
+            color: var(--text);
+            background: #334155;
+        }
+
+        .option-btn.correct {
+            color: white;
+            background: var(--success);
+        }
+
+        .option-btn.wrong {
+            color: white;
+            background: var(--danger);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        .feedback {
+            min-height: 24px;
+            margin: 10px 0 0;
+            font-weight: 700;
+        }
+
+        .exit-warning {
+            margin: 10px 0 0;
+            color: #fcd34d;
+            font-size: 0.9rem;
+        }
+
+        .controls,
+        .end-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .primary-button {
+            color: white;
+            background: var(--primary);
+        }
+
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            background: #475569;
+            text-decoration: none;
+        }
+
+        #next-btn,
+        #end-screen {
+            display: none;
+        }
+
+        #end-screen h2 {
+            margin: 8px 0;
+            color: #6ee7b7;
+        }
+
+        #end-screen p {
+            color: var(--muted);
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .top-bar {
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                gap: 4px;
+                align-items: center;
+            }
+
+            .round-pill,
+            .score-pill {
+                padding: 5px 6px;
+                font-size: 0.72rem;
+            }
+
+            .music-toggle {
+                grid-column: 2;
+                grid-row: 1;
+                justify-self: center;
+                min-height: 34px;
+                padding: 6px;
+                font-size: 0.72rem;
+            }
+
+            .score-pill {
+                grid-column: 3;
+                grid-row: 1;
+                justify-self: end;
+            }
+
+            .options-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .option-btn {
+                padding: 8px;
+                font-size: 0.88rem;
+            }
+
+            .image-frame {
+                width: min(100%, 280px);
+                height: min(30vh, 230px);
+            }
+        }
+
+        @media (max-height: 700px) {
+            .game-card {
+                padding: 10px 12px;
+            }
+
+            .top-bar {
+                margin-bottom: 6px;
+            }
+
+            h1 {
+                margin-bottom: 4px;
+                font-size: 1.55rem;
+            }
+
+            .intro {
+                margin-bottom: 6px;
+                font-size: 0.82rem;
+                line-height: 1.25;
+            }
+
+            .image-frame {
+                height: min(22vh, 150px);
+                margin-bottom: 6px;
+            }
+
+            .attempts {
+                margin-bottom: 6px;
+                font-size: 0.82rem;
+            }
+
+            .options-grid {
+                gap: 6px;
+            }
+
+            .option-btn {
+                min-height: 36px;
+                padding: 6px;
+                font-size: 0.78rem;
+            }
+
+            .feedback {
+                min-height: 18px;
+                margin-top: 6px;
+                font-size: 0.82rem;
+            }
+
+            .exit-warning {
+                margin-top: 6px;
+                font-size: 0.75rem;
+            }
+
+            .controls,
+            .end-actions {
+                margin-top: 6px;
+            }
+
+            .controls {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .controls button,
+            .controls .link-button {
+                min-height: 36px;
+                padding: 6px;
+                font-size: 0.78rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+    <main class="game-card">
+        <div class="top-bar">
+            <span class="round-pill" id="round-label">Rodada 1 de 10</span>
+            <button class="music-toggle" id="music-toggle" type="button" aria-pressed="false">🎵 Ativar trilha</button>
+            <span class="score-pill" id="points-label">Pontos: <strong id="score">0</strong></span>
+        </div>
+        <h1 id="game-title">🕵️ Acerte o Famoso</h1>
+        <p class="intro" id="game-intro" data-explanatory-text>10 famosos sorteados por partida, sem repetição. Você tem 3 chances; a foto clareia a cada erro.</p>
+        <p class="visually-hidden" id="music-status" role="status" aria-live="polite"></p>
+
+        <section id="game-screen" aria-label="Rodada do jogo">
+            <div class="image-frame">
+                <img id="celeb-img" src="" alt="Foto borrada de uma personalidade famosa">
+            </div>
+            <p class="attempts" id="attempts">Tentativas restantes: 3</p>
+            <div class="options-grid" id="options-container"></div>
+            <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+            <p class="exit-warning">Sair antes do fim cancela os pontos desta partida.</p>
+            <div class="controls">
+                <button class="primary-button" id="next-btn" type="button">Próxima rodada ➡️</button>
+                <a class="link-button" id="early-exit-link" href="index.html?menu=1#menu-container">Voltar ao menu</a>
+            </div>
+        </section>
+
+        <section id="end-screen" aria-live="polite">
+            <h2>Fim de jogo! 🎉</h2>
+            <p>Sua pontuação nesta partida: <strong id="final-score">0</strong></p>
+            <div class="end-actions">
+                <button class="primary-button" id="restart-btn" type="button">Jogar novamente 🔄</button>
+                <a class="link-button" href="index.html?menu=1#menu-container">Voltar ao menu</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const celebrities = [
+            { name: 'Amado Batista', image: '2019_Encontro_com_cantor_Amado_Batista,_Gilson_Machado_Neto_e_Uugton_Batista_da_Silva_(cropped).jpg' },
+            { name: 'Tiago Abravanel', image: '2020-04-28-tiago-abravanel.avif' },
+            { name: 'Bill Gates', image: 'Bill_Gates_at_the_European_Commission_-_P067383-987995_(cropped)_5.jpg' },
+            { name: 'Celso Portiolli', image: 'Celso_Portiolli_2021.jpg' },
+            { name: 'Daniel Radcliffe', image: 'DanielRadcliffe-byPhilipRomano.jpg' },
+            { name: 'Michael Jordan', image: 'FDB1BF72-3F75-446F-B4F2-000331AE638B.webp' },
+            { name: 'Luiz Inácio Lula da Silva', image: 'Foto_oficial_de_Luiz_Inácio_Lula_da_Silva_(ombros)_denoise.jpg' },
+            { name: 'Isaac Newton', image: 'GodfreyKneller-IsaacNewton-1689.jpg' },
+            { name: 'Adolf Hitler', image: 'Hitler_portrait_crop.jpg' },
+            { name: 'John Cena', image: 'John_Cena_2010.jpeg' },
+            { name: 'Joseph Stalin', image: 'Joseph_Stalin_official_portrait.jpg' },
+            { name: 'Leandro', image: 'Leandro_durante_um_Show.jpg' },
+            { name: 'Elon Musk', image: 'images (4).jpg' },
+            { name: 'Anderson Silva', image: 'images (5).jpg' },
+            { name: 'Acelino Freitas (Popó)', image: 'images (6).jpg' },
+            { name: 'Donald Trump', image: 'images (7).jpg' },
+            { name: 'Vladimir Putin', image: 'images (8).jpg' },
+            { name: 'Fausto Silva', image: 'images (10).jpg' },
+            { name: 'Patrícia Abravanel', image: 'images (11).jpg' },
+            { name: 'Ronaldinho Gaúcho', image: 'images (12).jpg' },
+            { name: 'Ronaldo Nazário', image: 'images (13).jpg' },
+            { name: 'Michael Phelps', image: 'images (14).jpg' },
+            { name: 'Johan Cruyff', image: 'images (16).jpg' },
+            { name: 'Galvão Bueno', image: 'images (17).jpg' },
+            { name: 'Ayrton Senna', image: 'images (18).jpg' },
+            { name: 'Jair Bolsonaro', image: 'images (20).jpg' },
+            { name: 'Neymar Jr.', image: 'images (21).jpg' },
+            { name: 'Albert Einstein', image: 'images (1).jpg' },
+            { name: 'Pelé', image: 'images.webp' },
+            { name: 'Cristiano Ronaldo', image: 'images (1).webp' },
+            { name: 'Lionel Messi', image: 'licensed-image.webp' },
+            { name: 'Silvio Santos', image: 'Silvio_Santos_em_maio_de_2019.jpg' },
+            { name: 'Nikola Tesla', image: 'Tesla_circa_1890.jpeg' },
+            { name: 'Thomas Edison', image: 'Thomas_Edison2.jpg' },
+            { name: 'Vinícius Júnior', image: 'Vinicius_Junior_Brazil_V_Morocco_13_June_2026-94.jpg' },
+            { name: 'Benito Mussolini', image: 'Mussolini_mezzobusto.jpg.webp' },
+            { name: 'Mike Tyson', image: 'Mike_Tyson_in_1987_cropped.jpg' },
+            { name: 'Mark Zuckerberg', image: 'Mark_Zuckerberg_(2025).jpg' },
+            { name: 'Stan Lee', image: '_95147195_mediaitem95147194.jpg.webp' }
+        ];
+
+        const ROUND_COUNT = 10;
+        const MAX_ATTEMPTS = 3;
+        const BLUR_LEVELS = [18, 12, 6, 0];
+        const POINTS_BY_MISSES = [20, 15, 10];
+        const SUPPORTED_LOCALES = ['pt-BR', 'en', 'es', 'de', 'ja', 'ru', 'fr', 'it'];
+        const LOCALE_IDS = {
+            'pt-BR': 'pt-BR', en: 'en-US', es: 'es-ES', de: 'de-DE',
+            ja: 'ja-JP', ru: 'ru-RU', fr: 'fr-FR', it: 'it-IT'
+        };
+        const celebrityTranslations = {
+            'Acerte o Famoso': ['Acerte o Famoso', 'Guess the Celebrity', 'Adivina al famoso', 'Berühmtheit erraten', '有名人当て', 'Угадай знаменитость', 'Devinez la célébrité', 'Indovina il personaggio famoso'],
+            'Pontos': ['Pontos:', 'Points:', 'Puntos:', 'Punkte:', 'ポイント：', 'Очки:', 'Points :', 'Punti:'],
+            'Rodada': ['Rodada', 'Round', 'Ronda', 'Runde', 'ラウンド', 'Раунд', 'Manche', 'Round'],
+            'Tentativas restantes': ['Tentativas restantes:', 'Attempts remaining:', 'Intentos restantes:', 'Verbleibende Versuche:', '残り回数：', 'Осталось попыток:', 'Tentatives restantes :', 'Tentativi rimasti:'],
+            'Próxima rodada': ['Próxima rodada', 'Next round', 'Siguiente ronda', 'Nächste Runde', '次のラウンド', 'Следующий раунд', 'Manche suivante', 'Prossimo round'],
+            'Voltar ao menu': ['Voltar ao menu', 'Back to menu', 'Volver al menú', 'Zurück zum Menü', 'メニューに戻る', 'Вернуться в меню', 'Retour au menu', 'Torna al menu'],
+            'Fim de jogo! 🎉': ['Fim de jogo! 🎉', 'Game over! 🎉', '¡Fin del juego! 🎉', 'Spiel vorbei! 🎉', 'ゲーム終了！🎉', 'Игра окончена! 🎉', 'Fin de la partie ! 🎉', 'Fine del gioco! 🎉'],
+            'Sua pontuação nesta partida': ['Sua pontuação nesta partida:', 'Your score in this game:', 'Tu puntuación en esta partida:', 'Deine Punktzahl in dieser Partie:', '今回のスコア：', 'Ваш счёт в этой игре:', 'Votre score pour cette partie :', 'Il tuo punteggio in questa partita:'],
+            'Jogar novamente': ['Jogar novamente', 'Play again', 'Jugar de nuevo', 'Erneut spielen', 'もう一度プレイ', 'Играть снова', 'Rejouer', 'Gioca di nuovo'],
+            'Sair antes do fim cancela os pontos desta partida.': ['Sair antes do fim cancela os pontos desta partida.', 'Leaving before the end cancels this game’s points.', 'Salir antes del final anula los puntos de esta partida.', 'Wenn du vor dem Ende gehst, verfallen die Punkte dieser Partie.', '終了前に退出すると、このゲームのポイントは無効になります。', 'Выход до конца отменит очки за эту игру.', 'Quitter avant la fin annule les points de cette partie.', 'Uscire prima della fine annulla i punti di questa partita.'],
+            '10 famosos sorteados por partida, sem repetição. Você tem 3 chances; a foto clareia a cada erro.': ['10 famosos sorteados por partida, sem repetição. Você tem 3 chances; a foto clareia a cada erro.', '10 randomly selected celebrities per game, no repeats. You have 3 tries; the photo gets clearer after each wrong answer.', '10 famosos al azar por partida, sin repetir. Tienes 3 intentos; la foto se aclara con cada error.', '10 zufällig ausgewählte Prominente pro Spiel, ohne Wiederholung. Du hast 3 Versuche; nach jedem Fehler wird das Bild klarer.', '毎回ランダムに選ばれる有名人10人（重複なし）。チャンスは3回。間違えるたびに写真が鮮明になります。', 'В каждой игре 10 случайных знаменитостей без повторов. У вас 3 попытки; после каждой ошибки фото становится чётче.', '10 célébrités tirées au sort par partie, sans répétition. Vous avez 3 essais ; la photo devient plus nette à chaque erreur.', '10 personaggi famosi casuali per partita, senza ripetizioni. Hai 3 tentativi; la foto diventa più nitida a ogni errore.'],
+            'Foto borrada de uma personalidade famosa': ['Foto borrada de uma personalidade famosa', 'Blurred photo of a famous person', 'Foto borrosa de una personalidad famosa', 'Verschwommenes Foto einer berühmten Persönlichkeit', '有名人のぼやけた写真', 'Размытое фото знаменитости', 'Photo floue d’une personnalité célèbre', 'Foto sfocata di una personalità famosa'],
+            'Rodada do jogo': ['Rodada do jogo', 'Game round', 'Ronda del juego', 'Spielrunde', 'ゲームラウンド', 'Раунд игры', 'Manche du jeu', 'Round del gioco'],
+            'Trilha sonora': ['Trilha sonora', 'Soundtrack', 'Banda sonora', 'Soundtrack', 'サウンドトラック', 'Саундтрек', 'Bande originale', 'Colonna sonora'],
+            '🎵 Ativar trilha': ['🎵 Ativar trilha', '🎵 Enable soundtrack', '🎵 Activar banda sonora', '🎵 Soundtrack aktivieren', '🎵 サウンドトラックを有効にする', '🎵 Включить саундтрек', '🎵 Activer la bande originale', '🎵 Attiva colonna sonora'],
+            '🔊 Pausar trilha': ['🔊 Pausar trilha', '🔊 Pause soundtrack', '🔊 Pausar banda sonora', '🔊 Soundtrack pausieren', '🔊 サウンドトラックを一時停止', '🔊 Приостановить саундтрек', '🔊 Mettre la bande originale en pause', '🔊 Metti in pausa la colonna sonora'],
+            'Trilha sonora pausada.': ['Trilha sonora pausada.', 'Soundtrack paused.', 'Banda sonora pausada.', 'Soundtrack pausiert.', 'サウンドトラックを一時停止しました。', 'Саундтрек приостановлен.', 'Bande originale en pause.', 'Colonna sonora in pausa.'],
+            'Não foi possível pausar a trilha sonora.': ['Não foi possível pausar a trilha sonora.', 'Could not pause the soundtrack.', 'No se pudo pausar la banda sonora.', 'Der Soundtrack konnte nicht pausiert werden.', 'サウンドトラックを一時停止できませんでした。', 'Не удалось приостановить саундтрек.', 'Impossible de mettre la bande originale en pause.', 'Impossibile mettere in pausa la colonna sonora.'],
+            'Este navegador não oferece suporte à trilha sonora.': ['Este navegador não oferece suporte à trilha sonora.', 'This browser does not support the soundtrack.', 'Este navegador no admite la banda sonora.', 'Dieser Browser unterstützt den Soundtrack nicht.', 'このブラウザーはサウンドトラックに対応していません。', 'Этот браузер не поддерживает саундтрек.', 'Ce navigateur ne prend pas en charge la bande originale.', 'Questo browser non supporta la colonna sonora.'],
+            'Trilha sonora original ativada.': ['Trilha sonora original ativada.', 'Original soundtrack enabled.', 'Banda sonora original activada.', 'Original-Soundtrack aktiviert.', 'オリジナルサウンドトラックを有効にしました。', 'Оригинальный саундтрек включён.', 'Bande originale activée.', 'Colonna sonora originale attivata.'],
+            'Não foi possível iniciar a trilha sonora.': ['Não foi possível iniciar a trilha sonora.', 'Could not start the soundtrack.', 'No se pudo iniciar la banda sonora.', 'Der Soundtrack konnte nicht gestartet werden.', 'サウンドトラックを開始できませんでした。', 'Не удалось запустить саундтрек.', 'Impossible de démarrer la bande originale.', 'Impossibile avviare la colonna sonora.'],
+            'O contexto de áudio não iniciou.': ['O contexto de áudio não iniciou.', 'The audio context did not start.', 'El contexto de audio no se inició.', 'Der Audiokontext wurde nicht gestartet.', 'オーディオコンテキストが開始されませんでした。', 'Аудиоконтекст не запустился.', 'Le contexte audio ne démarre pas.', 'Il contesto audio non si è avviato.'],
+            'Não foi possível carregar a imagem desta rodada.': ['Não foi possível carregar a imagem desta rodada.', 'Could not load this round’s image.', 'No se pudo cargar la imagen de esta ronda.', 'Das Bild dieser Runde konnte nicht geladen werden.', 'このラウンドの画像を読み込めませんでした。', 'Не удалось загрузить изображение этого раунда.', 'Impossible de charger l’image de cette manche.', 'Impossibile caricare l’immagine di questo round.'],
+            '❌ Não foi dessa vez. A foto ficou mais nítida; tente novamente!': ['❌ Não foi dessa vez. A foto ficou mais nítida; tente novamente!', '❌ Not this time. The photo is clearer; try again!', '❌ Esta vez no. La foto está más clara; ¡inténtalo de nuevo!', '❌ Diesmal nicht. Das Bild ist klarer; versuche es erneut!', '❌ 残念。写真が鮮明になりました。もう一度！', '❌ Не угадали. Фото стало чётче; попробуйте ещё раз!', '❌ Pas cette fois. La photo est plus nette ; réessayez !', '❌ Non questa volta. La foto è più nitida; riprova!']
+        };
+
+        function getCurrentLocale() {
+            const locale = window.BuuroGameLanguage?.language;
+            return SUPPORTED_LOCALES.includes(locale) ? locale : 'pt-BR';
+        }
+
+        function translateLocal(source) {
+            const row = celebrityTranslations[source];
+            if (!row) {
+                return window.BuuroGameLanguage?.translate?.(source) ?? source;
+            }
+            return row[SUPPORTED_LOCALES.indexOf(getCurrentLocale())];
+        }
+
+        function fillTemplate(source, values) {
+            let translated = source;
+            Object.entries(values).forEach(([key, value]) => {
+                translated = translated.replaceAll(`{${key}}`, String(value));
+            });
+            return translated;
+        }
+        const imagePath = (filename) => `img-famosos/${encodeURIComponent(filename)}`;
+        const roundLabel = document.getElementById('round-label');
+        const scoreEl = document.getElementById('score');
+        const attemptsEl = document.getElementById('attempts');
+        const imageEl = document.getElementById('celeb-img');
+        const optionsEl = document.getElementById('options-container');
+        const feedbackEl = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-btn');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const earlyExitLink = document.getElementById('early-exit-link');
+        const musicButton = document.getElementById('music-toggle');
+        const musicStatus = document.getElementById('music-status');
+        const melodyNotes = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46, 523.25, 659.25, 783.99, 1046.5, 880, 783.99, 659.25, 587.33];
+        const bassNotes = [130.81, 174.61, 146.83, 196];
+        let rounds = [];
+        let roundIndex = 0;
+        let score = 0;
+        let misses = 0;
+        let roundResolved = false;
+        let sessionScoreCommitted = false;
+        let audioContext = null;
+        let musicGain = null;
+        let musicTimer = null;
+        let musicStep = 0;
+        let feedbackState = null;
+        let musicStatusState = null;
+
+        function refreshLocalizedInterface() {
+            document.querySelector('title').textContent = translateLocal('Acerte o Famoso');
+            document.getElementById('game-title').textContent = `🕵️ ${translateLocal('Acerte o Famoso')}`;
+            document.getElementById('game-intro').textContent = translateLocal(
+                '10 famosos sorteados por partida, sem repetição. Você tem 3 chances; a foto clareia a cada erro.'
+            );
+            document.getElementById('points-label').childNodes[0].nodeValue =
+                `${translateLocal('Pontos')} `;
+            document.querySelector('.exit-warning').textContent = translateLocal(
+                'Sair antes do fim cancela os pontos desta partida.'
+            );
+            nextButton.textContent = `➡️ ${translateLocal('Próxima rodada')}`;
+            earlyExitLink.textContent = translateLocal('Voltar ao menu');
+            document.querySelector('#end-screen h2').textContent = translateLocal('Fim de jogo! 🎉');
+            document.querySelector('#end-screen p').childNodes[0].nodeValue =
+                `${translateLocal('Sua pontuação nesta partida')} `;
+            document.getElementById('restart-btn').textContent =
+                `🔄 ${translateLocal('Jogar novamente')}`;
+            document.querySelectorAll('.end-actions .link-button').forEach((link) => {
+                link.textContent = translateLocal('Voltar ao menu');
+            });
+            imageEl.alt = translateLocal('Foto borrada de uma personalidade famosa');
+            gameScreen.setAttribute('aria-label', translateLocal('Rodada do jogo'));
+
+            updateMusicButton(musicTimer !== null);
+            if (musicStatusState) {
+                musicStatus.textContent = translateLocal(musicStatusState);
+            }
+            refreshRoundText();
+            refreshFeedback();
+        }
+
+        function refreshRoundText() {
+            if (rounds.length === 0) return;
+            roundLabel.textContent = fillTemplate(
+                getCurrentLocale() === 'pt-BR'
+                    ? 'Rodada {current} de {total}'
+                    : window.BuuroGameLanguage.translate('Rodada {current} de {total}') ,
+                { current: roundIndex + 1, total: rounds.length }
+            );
+            attemptsEl.textContent =
+                `${translateLocal('Tentativas restantes')} ${MAX_ATTEMPTS - misses}`;
+            scoreEl.textContent = score.toLocaleString(LOCALE_IDS[getCurrentLocale()]);
+            document.getElementById('final-score').textContent =
+                score.toLocaleString(LOCALE_IDS[getCurrentLocale()]);
+        }
+
+        function refreshFeedback() {
+            if (!feedbackState) return;
+            const { type, name, earnedPoints } = feedbackState;
+            if (type === 'correct') {
+                const templates = {
+                    'pt-BR': '✅ Acertou! +{score} pontos.',
+                    en: '✅ Correct! +{score} points.',
+                    es: '✅ ¡Correcto! +{score} puntos.',
+                    de: '✅ Richtig! +{score} Punkte.',
+                    ja: '✅ 正解！+{score}ポイント。',
+                    ru: '✅ Верно! +{score} очков.',
+                    fr: '✅ Bonne réponse ! +{score} points.',
+                    it: '✅ Corretto! +{score} punti.'
+                };
+                feedbackEl.textContent = fillTemplate(
+                    templates[getCurrentLocale()],
+                    { score: earnedPoints }
+                );
+            } else if (type === 'wrong') {
+                feedbackEl.textContent = translateLocal(
+                    '❌ Não foi dessa vez. A foto ficou mais nítida; tente novamente!'
+                );
+            } else if (type === 'lost') {
+                const templates = {
+                    'pt-BR': '❌ As tentativas acabaram. Era {name}.',
+                    en: '❌ No tries left. It was {name}.',
+                    es: '❌ Se acabaron los intentos. Era {name}.',
+                    de: '❌ Keine Versuche mehr. Es war {name}.',
+                    ja: '❌ 挑戦回数がなくなりました。正解は{name}でした。',
+                    ru: '❌ Попытки закончились. Это был(а) {name}.',
+                    fr: '❌ Plus d’essais. C’était {name}.',
+                    it: '❌ Tentativi terminati. Era {name}.'
+                };
+                feedbackEl.textContent = fillTemplate(templates[getCurrentLocale()], { name });
+            } else if (type === 'image') {
+                feedbackEl.textContent = translateLocal(
+                    'Não foi possível carregar a imagem desta rodada.'
+                );
+            }
+        }
+
+        function shuffle(items) {
+            const shuffled = [...items];
+            for (let index = shuffled.length - 1; index > 0; index--) {
+                const randomIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+            }
+            return shuffled;
+        }
+
+        function drawRandomCelebrities(count) {
+            return shuffle(celebrities).slice(0, Math.min(count, celebrities.length));
+        }
+
+        function scheduleTone(frequency, startTime, duration, waveform, volume) {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = waveform;
+            oscillator.frequency.setValueAtTime(frequency, startTime);
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+            oscillator.connect(gain);
+            gain.connect(musicGain);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration + 0.03);
+        }
+
+        function playMusicStep() {
+            if (!audioContext || audioContext.state !== 'running') return;
+            const startTime = audioContext.currentTime + 0.02;
+            const note = melodyNotes[musicStep % melodyNotes.length];
+            scheduleTone(note, startTime, 0.22, 'triangle', 0.055);
+            if (musicStep % 4 === 0) {
+                const bassNote = bassNotes[(musicStep / 4) % bassNotes.length];
+                scheduleTone(bassNote, startTime, 0.42, 'sine', 0.035);
+            }
+            musicStep++;
+        }
+
+        function updateMusicButton(isPlaying) {
+            musicButton.setAttribute('aria-pressed', String(isPlaying));
+            musicButton.textContent = translateLocal(isPlaying ? '🔊 Pausar trilha' : '🎵 Ativar trilha');
+        }
+
+        async function toggleMusic() {
+            if (musicTimer !== null) {
+                window.clearInterval(musicTimer);
+                musicTimer = null;
+                musicStep = 0;
+                updateMusicButton(false);
+                try {
+                    await audioContext.suspend();
+                    musicStatusState = 'Trilha sonora pausada.';
+                    musicStatus.textContent = translateLocal(musicStatusState);
+                } catch (error) {
+                    musicStatusState = 'Não foi possível pausar a trilha sonora.';
+                    musicStatus.textContent = translateLocal(musicStatusState);
+                    console.error('Não foi possível pausar a trilha sonora.', error);
+                }
+                return;
+            }
+
+            try {
+                const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextConstructor) {
+                    musicStatusState = 'Este navegador não oferece suporte à trilha sonora.';
+                    musicStatus.textContent = translateLocal(musicStatusState);
+                    musicButton.disabled = true;
+                    return;
+                }
+
+                if (!audioContext) {
+                    audioContext = new AudioContextConstructor();
+                    musicGain = audioContext.createGain();
+                    musicGain.gain.setValueAtTime(0.65, audioContext.currentTime);
+                    musicGain.connect(audioContext.destination);
+                }
+
+                await audioContext.resume();
+                if (audioContext.state !== 'running') {
+                    throw new Error(translateLocal('O contexto de áudio não iniciou.'));
+                }
+
+                musicStep = 0;
+                playMusicStep();
+                musicTimer = window.setInterval(playMusicStep, 280);
+                updateMusicButton(true);
+                musicStatusState = 'Trilha sonora original ativada.';
+                musicStatus.textContent = translateLocal(musicStatusState);
+            } catch (error) {
+                if (musicTimer !== null) window.clearInterval(musicTimer);
+                musicTimer = null;
+                updateMusicButton(false);
+                musicStatusState = 'Não foi possível iniciar a trilha sonora.';
+                musicStatus.textContent = translateLocal(musicStatusState);
+                console.error('Não foi possível iniciar a trilha sonora.', error);
+            }
+        }
+
+        function renderRound() {
+            const celebrity = rounds[roundIndex];
+            misses = 0;
+            roundResolved = false;
+            feedbackEl.textContent = '';
+            feedbackState = null;
+            nextButton.style.display = 'none';
+            imageEl.hidden = false;
+            imageEl.src = imagePath(celebrity.image);
+            imageEl.style.filter = `blur(${BLUR_LEVELS[0]}px)`;
+            refreshRoundText();
+
+            const wrongOptions = shuffle(celebrities.filter((item) => item.name !== celebrity.name))
+                .slice(0, 3)
+                .map((item) => item.name);
+            const options = shuffle([celebrity.name, ...wrongOptions]);
+            optionsEl.replaceChildren();
+
+            options.forEach((name) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.type = 'button';
+                button.textContent = name;
+                button.addEventListener('click', () => checkAnswer(button, name));
+                optionsEl.appendChild(button);
+            });
+        }
+
+        function revealAnswer(celebrity) {
+            imageEl.style.filter = `blur(${BLUR_LEVELS[BLUR_LEVELS.length - 1]}px)`;
+            optionsEl.querySelectorAll('.option-btn').forEach((button) => {
+                button.disabled = true;
+                if (button.textContent === celebrity.name) button.classList.add('correct');
+            });
+            nextButton.style.display = 'inline-block';
+        }
+
+        function checkAnswer(selectedButton, selectedName) {
+            if (roundResolved) return;
+
+            const celebrity = rounds[roundIndex];
+            if (selectedName === celebrity.name) {
+                roundResolved = true;
+                selectedButton.classList.add('correct');
+                const earnedPoints = POINTS_BY_MISSES[misses];
+                score += earnedPoints;
+                scoreEl.textContent = score.toLocaleString(LOCALE_IDS[getCurrentLocale()]);
+                feedbackState = { type: 'correct', earnedPoints };
+                refreshFeedback();
+                feedbackEl.style.color = 'var(--success)';
+                revealAnswer(celebrity);
+                return;
+            }
+
+            selectedButton.disabled = true;
+            selectedButton.classList.add('wrong');
+            misses++;
+            attemptsEl.textContent =
+                `${translateLocal('Tentativas restantes')} ${MAX_ATTEMPTS - misses}`;
+            imageEl.style.filter = `blur(${BLUR_LEVELS[misses]}px)`;
+
+            if (misses === MAX_ATTEMPTS) {
+                roundResolved = true;
+                feedbackState = { type: 'lost', name: celebrity.name };
+                refreshFeedback();
+                feedbackEl.style.color = 'var(--danger)';
+                revealAnswer(celebrity);
+                return;
+            }
+
+            feedbackState = { type: 'wrong' };
+            refreshFeedback();
+            feedbackEl.style.color = 'var(--danger)';
+        }
+
+        function showEndScreen() {
+            if (!sessionScoreCommitted && score > 0) {
+                window.GameScoreCounter.add('famosos', score);
+            }
+            sessionScoreCommitted = true;
+            gameScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            document.getElementById('final-score').textContent =
+                score.toLocaleString(LOCALE_IDS[getCurrentLocale()]);
+        }
+
+        function nextRound() {
+            if (roundIndex + 1 >= rounds.length) {
+                showEndScreen();
+                return;
+            }
+            roundIndex++;
+            renderRound();
+        }
+
+        function startGame() {
+            rounds = drawRandomCelebrities(ROUND_COUNT);
+            roundIndex = 0;
+            score = 0;
+            sessionScoreCommitted = false;
+            scoreEl.textContent = '0';
+            gameScreen.style.display = 'block';
+            endScreen.style.display = 'none';
+            renderRound();
+        }
+
+        imageEl.addEventListener('error', () => {
+            feedbackState = { type: 'image' };
+            refreshFeedback();
+            feedbackEl.style.color = 'var(--danger)';
+            roundResolved = true;
+            optionsEl.querySelectorAll('.option-btn').forEach((button) => {
+                button.disabled = true;
+            });
+            nextButton.style.display = 'inline-block';
+        });
+
+        nextButton.addEventListener('click', nextRound);
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        earlyExitLink.addEventListener('click', (event) => {
+            const confirmTemplates = {
+                'pt-BR': 'Se voltar ao menu agora, você perderá os {score} pontos desta partida. Deseja continuar?',
+                en: 'If you return to the menu now, you will lose this game’s {score} points. Do you want to continue?',
+                es: 'Si vuelves al menú ahora, perderás los {score} puntos de esta partida. ¿Quieres continuar?',
+                de: 'Wenn du jetzt zum Menü zurückkehrst, verlierst du die {score} Punkte dieser Partie. Möchtest du fortfahren?',
+                ja: '今メニューに戻ると、このゲームの{score}ポイントを失います。続けますか？',
+                ru: 'Если вы вернётесь в меню сейчас, потеряете {score} очков этой игры. Продолжить?',
+                fr: 'Si vous revenez au menu maintenant, vous perdrez les {score} points de cette partie. Voulez-vous continuer ?',
+                it: 'Se torni al menu ora, perderai i {score} punti di questa partita. Vuoi continuare?'
+            };
+            const shouldLeave = window.confirm(
+                fillTemplate(confirmTemplates[getCurrentLocale()], { score })
+            );
+            if (!shouldLeave) event.preventDefault();
+        });
+        musicButton.addEventListener('click', toggleMusic);
+        window.addEventListener('buuro-language-applied', refreshLocalizedInterface);
+        window.addEventListener('buuro-language-changed', refreshLocalizedInterface);
+        refreshLocalizedInterface();
+        startGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Magnitude | Buuro</title>
+    <script src="game-language.js" defer></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --blue: #38bdf8;
+            --red: #f43f5e;
+            --success: #22c55e;
+            --gold: #f5c542;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background: radial-gradient(circle at top, #1e293b, #0f172a 70%);
+            color: var(--text);
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        .game {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--blue);
+            letter-spacing: 2px;
+        }
+
+        .subtitle { color: var(--muted); margin: 6px 0 14px; }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 16px;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.9);
+            font-weight: 700;
+        }
+
+        .arena {
+            height: 340px;
+            margin-top: 16px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            position: relative;
+            overflow: hidden;
+            padding: 24px 16px 48px;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            background: var(--card);
+        }
+
+        .ground {
+            position: absolute;
+            left: 0;
+            bottom: 48px;
+            width: 100%;
+            height: 2px;
+            background: #64748b;
+        }
+
+        .item {
+            width: 44%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        .shape {
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            transition: height 0.08s linear;
+        }
+
+        .shape svg {
+            width: auto;
+            height: 100%;
+            display: block;
+        }
+
+        .reference svg { fill: var(--blue); }
+        .target svg { fill: var(--red); }
+
+        .ghost {
+            position: absolute;
+            bottom: 0;
+            display: none;
+            opacity: 0.35;
+        }
+
+        .ghost svg { fill: var(--success); }
+
+        .label {
+            position: absolute;
+            bottom: -38px;
+            width: 100%;
+            color: var(--muted);
+            font-size: 0.86rem;
+            text-align: center;
+        }
+
+        .label strong {
+            display: block;
+            color: var(--text);
+        }
+
+        .controls {
+            display: grid;
+            gap: 14px;
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 16px;
+            background: var(--card);
+        }
+
+        .feedback {
+            min-height: 24px;
+            text-align: center;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            accent-color: var(--red);
+            cursor: pointer;
+        }
+
+        button {
+            min-height: 46px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--gold);
+            color: #171717;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button:hover { filter: brightness(1.08); }
+
+        .music-button {
+            background: #0e7490;
+            color: #fff;
+        }
+
+        .music-status {
+            min-height: 20px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .next-button {
+            display: none;
+            background: var(--success);
+            color: #fff;
+        }
+
+        .menu-button {
+            width: 100%;
+            margin-top: 10px;
+            background: #334155;
+            color: #fff;
+        }
+
+        .game-over {
+            display: none;
+            margin-top: 16px;
+            padding: 28px;
+            text-align: center;
+            border-radius: 16px;
+            background: var(--card);
+        }
+
+        .final-score {
+            margin: 12px 0;
+            color: var(--blue);
+            font-size: 3rem;
+            font-weight: 900;
+        }
+
+        @media (max-width: 520px) {
+            body { padding: 10px; }
+            .arena { height: 280px; }
+            .hud { font-size: 0.82rem; }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+    <main class="game">
+        <header>
+            <h1>MAGNITUDE</h1>
+            <p class="subtitle" data-explanatory-text>Ajuste o objeto vermelho em relação à referência azul. Os desafios mudam a cada partida.</p>
+            <div class="hud">
+                <span>Rodada: <strong id="round-num">1 / 10</strong></span>
+                <span>Pontos: <strong id="total-score">0 / 1000</strong></span>
+            </div>
+        </header>
+
+        <section id="game-area">
+            <div class="arena">
+                <div class="ground"></div>
+                <div class="item">
+                    <div class="shape reference" id="reference-shape"></div>
+                    <div class="label"><strong id="reference-name"></strong><span id="reference-size"></span></div>
+                </div>
+                <div class="item">
+                    <div class="shape ghost" id="ghost-shape"></div>
+                    <div class="shape target" id="target-shape"></div>
+                    <div class="label"><strong id="target-name"></strong><span id="target-size"></span></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="feedback" id="feedback">Use o controle para ajustar o tamanho</div>
+                <button type="button" class="music-button" id="music-toggle" aria-pressed="false">Tocar trilha sonora</button>
+                <div class="music-status" id="music-status" role="status" aria-live="polite"></div>
+                <div class="slider-row">
+                    <span>Menor</span>
+                    <input type="range" id="size-slider" min="15" max="260" value="100" aria-label="Tamanho do objeto">
+                    <span>Maior</span>
+                </div>
+                <button type="button" id="guess-button">Confirmar tamanho</button>
+                <button type="button" id="next-button" class="next-button">Próxima rodada</button>
+            </div>
+        </section>
+
+        <section class="game-over" id="game-over">
+            <h2>Desafio concluído!</h2>
+            <div class="final-score" id="final-score">0 / 1000</div>
+            <button type="button" id="restart-button">Jogar novamente</button>
+        </section>
+
+        <button type="button" class="menu-button" id="menu-button">Retornar ao menu</button>
+    </main>
+    <audio id="background-music" src="vidssave.com%20Brawl%20Stars%20OST%20_%20Season%2026%20_%20Godzilla%20_%20Menu%20Music%20256KBPS.mp3" loop preload="none"></audio>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const SHAPES = {
+            human: '<svg viewBox="0 0 64 160"><circle cx="32" cy="18" r="14"/><rect x="18" y="36" width="28" height="58" rx="8"/><rect x="19" y="96" width="11" height="64"/><rect x="34" y="96" width="11" height="64"/></svg>',
+            giraffe: '<svg viewBox="0 0 100 200"><rect x="65" y="10" width="14" height="90" rx="5"/><ellipse cx="75" cy="12" rx="14" ry="8"/><ellipse cx="45" cy="105" rx="35" ry="18"/><rect x="20" y="115" width="8" height="85"/><rect x="65" y="115" width="8" height="85"/></svg>',
+            bus: '<svg viewBox="0 0 240 90"><rect x="5" y="10" width="230" height="65" rx="10"/><circle cx="50" cy="75" r="14"/><circle cx="190" cy="75" r="14"/></svg>',
+            christ: '<svg viewBox="0 0 160 200"><rect x="68" y="30" width="24" height="170"/><rect x="10" y="45" width="140" height="18" rx="6"/><circle cx="80" cy="18" r="12"/></svg>',
+            dino: '<svg viewBox="0 0 180 140"><path d="M20,110 Q60,90 90,50 Q110,15 145,20 Q160,35 135,45 Q115,65 110,100 L115,140 L95,140 L90,110 L65,140 L45,140 L60,105 Z"/></svg>',
+            guitar: '<svg viewBox="0 0 80 180"><rect x="35" y="5" width="10" height="85"/><circle cx="40" cy="110" r="22"/><circle cx="40" cy="145" r="30"/></svg>',
+            fridge: '<svg viewBox="0 0 90 180"><rect x="5" y="5" width="80" height="170" rx="8"/></svg>',
+            statue: '<svg viewBox="0 0 100 220"><polygon points="25,220 75,220 65,110 35,110"/><rect x="38" y="45" width="24" height="65"/><rect x="55" y="10" width="8" height="45"/><circle cx="50" cy="35" r="9"/></svg>',
+            cat: '<svg viewBox="0 0 100 120"><path d="M25 42 18 10 42 28Q50 25 58 28L82 10 75 42Q88 55 83 78Q78 96 50 96Q22 96 17 78Q12 55 25 42Z"/><ellipse cx="50" cy="99" rx="24" ry="15"/><rect x="28" y="104" width="8" height="16"/><rect x="64" y="104" width="8" height="16"/><path d="M73 94Q98 88 88 70" fill="none" stroke="currentColor" stroke-width="6"/></svg>',
+            elephant: '<svg viewBox="0 0 180 140"><ellipse cx="82" cy="75" rx="52" ry="42"/><circle cx="132" cy="61" r="30"/><ellipse cx="116" cy="67" rx="20" ry="27"/><path d="M151 68Q170 82 157 112L147 108Q154 88 143 84Z"/><rect x="45" y="102" width="17" height="38"/><rect x="105" y="102" width="17" height="38"/></svg>',
+            tree: '<svg viewBox="0 0 120 200"><rect x="50" y="112" width="20" height="88"/><polygon points="60,0 5,85 33,85 0,130 120,130 87,85 115,85"/></svg>',
+            eiffel: '<svg viewBox="0 0 100 220"><path d="M45 15H55L58 65 69 105 85 155 96 215H4L15 155 31 105 42 65Z"/><rect x="22" y="105" width="56" height="9"/><rect x="12" y="155" width="76" height="9"/><rect x="35" y="64" width="30" height="8"/></svg>',
+            skyscraper: '<svg viewBox="0 0 100 220"><path d="M35 220 43 45 50 0 57 45 66 220Z"/><rect x="30" y="70" width="40" height="150"/><rect x="20" y="115" width="60" height="105"/><rect x="10" y="160" width="80" height="60"/></svg>',
+            dog: '<svg viewBox="0 0 140 100"><ellipse cx="70" cy="58" rx="39" ry="24"/><circle cx="111" cy="43" r="20"/><path d="M121 26 132 15 130 40M102 25 96 10 112 22"/><rect x="43" y="72" width="10" height="28"/><rect x="86" y="72" width="10" height="28"/><path d="M33 53Q8 38 14 24" fill="none" stroke="currentColor" stroke-width="7"/></svg>',
+            chair: '<svg viewBox="0 0 100 140"><rect x="20" y="8" width="60" height="62" rx="6"/><rect x="16" y="66" width="68" height="12" rx="3"/><path d="M23 78 28 140M77 78 72 140" fill="none" stroke="currentColor" stroke-width="8"/></svg>',
+            horse: '<svg viewBox="0 0 160 140"><ellipse cx="76" cy="65" rx="48" ry="27"/><path d="M104 55 120 25 139 20 145 32 128 45 121 68Z"/><circle cx="140" cy="25" r="3" fill="#0f172a"/><path d="M135 18 132 5 143 16M119 24 115 10 128 19"/><path d="M42 83 38 138M62 84 65 138M94 84 91 138M112 78 118 138M29 55Q10 35 17 20" fill="none" stroke="currentColor" stroke-width="9"/><path d="M115 27Q105 9 119 6" fill="none" stroke="currentColor" stroke-width="6"/></svg>',
+            car: '<svg viewBox="0 0 200 100"><path d="M20 60 35 34Q40 25 55 25H130Q145 25 158 43L176 55Q188 59 188 73V83H12V70Q12 62 20 60Z"/><path d="M48 38H91V57H35ZM101 38H129Q139 38 150 57H101Z" fill="#0f172a"/><circle cx="50" cy="78" r="16"/><circle cx="150" cy="78" r="16"/></svg>',
+            house: '<svg viewBox="0 0 140 140"><path d="M8 62 70 10 132 62V132H8Z"/><rect x="57" y="83" width="28" height="49" fill="#0f172a"/><rect x="22" y="76" width="24" height="24" fill="#0f172a"/><rect x="94" y="76" width="24" height="24" fill="#0f172a"/></svg>',
+            airplane: '<svg viewBox="0 0 200 120"><path d="M96 4Q104 4 108 18L118 53 187 77Q196 81 192 88L187 94 115 80 110 107 133 117 131 120 101 114 69 120 67 117 91 107 86 80 13 94 8 88Q4 81 13 77L83 53 90 18Q92 6 96 4Z"/></svg>',
+            pyramid: '<svg viewBox="0 0 160 140"><path d="M80 5 5 135H155Z"/><path d="m80 5 18 130h57Z" fill="#f5c542"/><path d="M38 78h84M23 105h114" fill="none" stroke="currentColor" stroke-width="4"/></svg>',
+            windTurbine: '<svg viewBox="0 0 100 220"><path d="M46 35H54L60 220H40Z"/><circle cx="50" cy="34" r="9"/><path d="M48 30 42 4Q50 0 56 5L53 31M55 36 83 24Q89 31 84 38L57 43M45 39 22 60Q15 55 18 48L42 33" /></svg>',
+            bigBen: '<svg viewBox="0 0 100 220"><path d="M28 220 35 65H65L72 220Z"/><path d="M33 65 38 35H62L67 65ZM42 35 46 12H54L58 35ZM48 12V2H52V12Z"/><circle cx="50" cy="51" r="10" fill="#0f172a"/><path d="M50 43V51L56 55" fill="none" stroke="currentColor" stroke-width="2"/><path d="M36 90h28M35 125h30M33 165h34" stroke="currentColor" stroke-width="3"/></svg>',
+            rocket: '<svg viewBox="0 0 100 200"><path d="M50 4Q83 36 78 111L68 147H32L22 111Q17 36 50 4Z"/><circle cx="50" cy="65" r="12" fill="#0f172a"/><path d="M23 105 5 140 32 130M77 105 95 140 68 130M39 147Q36 176 50 196Q64 176 61 147Z"/><path d="M42 33h16" stroke="currentColor" stroke-width="4"/></svg>',
+            palm: '<svg viewBox="0 0 120 200"><path d="M54 68Q60 120 47 200H68Q71 130 65 68Z"/><path d="M59 68Q16 62 5 34 31 35 55 54 32 22 38 5 58 22 63 50 73 19 96 8 96 37 71 59 102 39 119 43 108 68 65 71Z"/></svg>',
+            mountain: '<svg viewBox="0 0 200 140"><path d="M5 135 66 48 91 78 132 10 195 135Z"/><path d="m112 44 20-34 25 50-19-9-8 12-10-13-13 8Z" fill="#f8fafc"/><path d="m40 135 27-87 24 30 18-25 34 82Z" fill="#cbd5e1"/></svg>'
+        };
+
+        const ROUND_POOL = [
+            { reference: { name: 'Pessoa adulta', size: 1.75, shape: SHAPES.human, reveal: '1,75 m' }, target: { name: 'Girafa', size: 5.5, shape: SHAPES.giraffe, reveal: '5,5 m' } },
+            { reference: { name: 'Guitarra elétrica', size: 1.0, shape: SHAPES.guitar, reveal: '1 m' }, target: { name: 'Geladeira duplex', size: 1.85, shape: SHAPES.fridge, reveal: '1,85 m' } },
+            { reference: { name: 'Ônibus urbano', size: 3.2, shape: SHAPES.bus, reveal: '3,2 m' }, target: { name: 'Tiranossauro Rex', size: 4.0, shape: SHAPES.dino, reveal: '4 m' } },
+            { reference: { name: 'Pessoa adulta', size: 1.75, shape: SHAPES.human, reveal: '1,75 m' }, target: { name: 'Cristo Redentor', size: 38.0, shape: SHAPES.christ, reveal: '38 m' } },
+            { reference: { name: 'Cristo Redentor', size: 38.0, shape: SHAPES.christ, reveal: '38 m' }, target: { name: 'Estátua da Liberdade', size: 93.0, shape: SHAPES.statue, reveal: '93 m' } },
+            { reference: { name: 'Pessoa adulta', size: 1.75, shape: SHAPES.human, reveal: '1,75 m' }, target: { name: 'Gato doméstico', size: 0.3, shape: SHAPES.cat, reveal: 'cerca de 0,3 m' } },
+            { reference: { name: 'Girafa', size: 5.5, shape: SHAPES.giraffe, reveal: '5,5 m' }, target: { name: 'Elefante africano', size: 3.2, shape: SHAPES.elephant, reveal: 'cerca de 3,2 m' } },
+            { reference: { name: 'Ônibus urbano', size: 3.2, shape: SHAPES.bus, reveal: '3,2 m' }, target: { name: 'Árvore alta', size: 15.0, shape: SHAPES.tree, reveal: 'cerca de 15 m' } },
+            { reference: { name: 'Cristo Redentor', size: 38.0, shape: SHAPES.christ, reveal: '38 m' }, target: { name: 'Torre Eiffel', size: 330.0, shape: SHAPES.eiffel, reveal: '330 m' } },
+            { reference: { name: 'Torre Eiffel', size: 330.0, shape: SHAPES.eiffel, reveal: '330 m' }, target: { name: 'Burj Khalifa', size: 828.0, shape: SHAPES.skyscraper, reveal: '828 m' } },
+            { reference: { name: 'Cão doméstico', size: 0.6, shape: SHAPES.dog, reveal: 'cerca de 0,6 m' }, target: { name: 'Cadeira', size: 0.9, shape: SHAPES.chair, reveal: 'cerca de 0,9 m' } },
+            { reference: { name: 'Cavalo', size: 1.6, shape: SHAPES.horse, reveal: 'cerca de 1,6 m' }, target: { name: 'Girafa', size: 5.5, shape: SHAPES.giraffe, reveal: '5,5 m' } },
+            { reference: { name: 'Carro', size: 1.5, shape: SHAPES.car, reveal: 'cerca de 1,5 m' }, target: { name: 'Ônibus urbano', size: 3.2, shape: SHAPES.bus, reveal: '3,2 m' } },
+            { reference: { name: 'Casa térrea', size: 6.0, shape: SHAPES.house, reveal: 'cerca de 6 m' }, target: { name: 'Árvore alta', size: 15.0, shape: SHAPES.tree, reveal: 'cerca de 15 m' } },
+            { reference: { name: 'Avião comercial', size: 12.0, shape: SHAPES.airplane, reveal: 'cerca de 12 m de altura' }, target: { name: 'Árvore alta', size: 15.0, shape: SHAPES.tree, reveal: 'cerca de 15 m' } },
+            { reference: { name: 'Pirâmide de Quéops', size: 146.0, shape: SHAPES.pyramid, reveal: '146 m originalmente' }, target: { name: 'Torre Eiffel', size: 330.0, shape: SHAPES.eiffel, reveal: '330 m' } },
+            { reference: { name: 'Turbina eólica', size: 150.0, shape: SHAPES.windTurbine, reveal: 'cerca de 150 m' }, target: { name: 'Torre Eiffel', size: 330.0, shape: SHAPES.eiffel, reveal: '330 m' } },
+            { reference: { name: 'Big Ben', size: 96.0, shape: SHAPES.bigBen, reveal: '96 m' }, target: { name: 'Estátua da Liberdade', size: 93.0, shape: SHAPES.statue, reveal: '93 m' } },
+            { reference: { name: 'Foguete', size: 70.0, shape: SHAPES.rocket, reveal: 'cerca de 70 m' }, target: { name: 'Cristo Redentor', size: 38.0, shape: SHAPES.christ, reveal: '38 m' } },
+            { reference: { name: 'Burj Khalifa', size: 828.0, shape: SHAPES.skyscraper, reveal: '828 m' }, target: { name: 'Monte Everest', size: 8849.0, shape: SHAPES.mountain, reveal: '8.849 m de altitude' } },
+            { reference: { name: 'Palmeira alta', size: 20.0, shape: SHAPES.palm, reveal: 'cerca de 20 m' }, target: { name: 'Árvore alta', size: 15.0, shape: SHAPES.tree, reveal: 'cerca de 15 m' } }
+        ];
+
+        const ROUND_NAME_TRANSLATIONS = {
+            'Pessoa adulta': ['Adult person', 'Persona adulta', 'Erwachsene Person', 'Pessoa adulta', '成人', 'Взрослый человек', 'Personne adulte', 'Persona adulta'],
+            'Girafa': ['Giraffe', 'Jirafa', 'Giraffe', 'Girafa', 'キリン', 'Жираф', 'Girafe', 'Giraffa'],
+            'Guitarra elétrica': ['Electric guitar', 'Guitarra eléctrica', 'Elektrische Gitarre', 'Guitarra elétrica', 'エレキギター', 'Электрогитара', 'Guitare électrique', 'Chitarra elettrica'],
+            'Geladeira duplex': ['Double-door refrigerator', 'Refrigerador de dos puertas', 'Kühlschrank mit Doppeltür', 'Geladeira duplex', '両開き冷蔵庫', 'Двухдверный холодильник', 'Réfrigérateur à deux portes', 'Frigorifero a doppia porta'],
+            'Ônibus urbano': ['City bus', 'Autobús urbano', 'Stadtbus', 'Ônibus urbano', '路線バス', 'Городской автобус', 'Bus urbain', 'Autobus urbano'],
+            'Tiranossauro Rex': ['Tyrannosaurus rex', 'Tiranosaurio rex', 'Tyrannosaurus Rex', 'Tiranossauro Rex', 'ティラノサウルス', 'Тираннозавр', 'Tyrannosaure rex', 'Tirannosauro'],
+            'Cristo Redentor': ['Christ the Redeemer', 'Cristo Redentor', 'Christus der Erlöser', 'Cristo Redentor', 'コルコバードのキリスト', 'Христос-Искупитель', 'Christ Rédempteur', 'Cristo Redentore'],
+            'Estátua da Liberdade': ['Statue of Liberty', 'Estatua de la Libertad', 'Freiheitsstatue', 'Estátua da Liberdade', '自由の女神像', 'Статуя Свободы', 'Statue de la Liberté', 'Statua della Libertà'],
+            'Gato doméstico': ['Domestic cat', 'Gato doméstico', 'Hauskatze', 'Gato doméstico', 'イエネコ', 'Домашняя кошка', 'Chat domestique', 'Gatto domestico'],
+            'Elefante africano': ['African elephant', 'Elefante africano', 'Afrikanischer Elefant', 'Elefante africano', 'アフリカゾウ', 'Африканский слон', 'Éléphant d’Afrique', 'Elefante africano'],
+            'Árvore alta': ['Tall tree', 'Árbol alto', 'Hoher Baum', 'Árvore alta', '高い木', 'Высокое дерево', 'Grand arbre', 'Albero alto'],
+            'Torre Eiffel': ['Eiffel Tower', 'Torre Eiffel', 'Eiffelturm', 'Torre Eiffel', 'エッフェル塔', 'Эйфелева башня', 'Tour Eiffel', 'Torre Eiffel'],
+            'Burj Khalifa': ['Burj Khalifa', 'Burj Khalifa', 'Burj Khalifa', 'Burj Khalifa', 'ブルジュ・ハリファ', 'Бурдж-Халифа', 'Burj Khalifa', 'Burj Khalifa'],
+            'Cão doméstico': ['Domestic dog', 'Perro doméstico', 'Haushund', 'Cão doméstico', 'イエイヌ', 'Домашняя собака', 'Chien domestique', 'Cane domestico'],
+            'Cadeira': ['Chair', 'Silla', 'Stuhl', 'Cadeira', '椅子', 'Стул', 'Chaise', 'Sedia'],
+            'Cavalo': ['Horse', 'Caballo', 'Pferd', 'Cavalo', '馬', 'Лошадь', 'Cheval', 'Cavallo'],
+            'Carro': ['Car', 'Coche', 'Auto', 'Carro', '車', 'Автомобиль', 'Voiture', 'Automobile'],
+            'Casa térrea': ['Single-story house', 'Casa de una planta', 'Einstöckiges Haus', 'Casa térrea', '平屋', 'Одноэтажный дом', 'Maison de plain-pied', 'Casa a un piano'],
+            'Avião comercial': ['Commercial airplane', 'Avión comercial', 'Verkehrsflugzeug', 'Avião comercial', '旅客機', 'Пассажирский самолёт', 'Avion de ligne', 'Aereo di linea'],
+            'Pirâmide de Quéops': ['Great Pyramid of Giza', 'Pirámide de Keops', 'Cheops-Pyramide', 'Pirâmide de Quéops', 'クフ王のピラミッド', 'Пирамида Хеопса', 'Pyramide de Khéops', 'Piramide di Cheope'],
+            'Turbina eólica': ['Wind turbine', 'Turbina eólica', 'Windkraftanlage', 'Turbina eólica', '風力タービン', 'Ветряная турбина', 'Éolienne', 'Turbina eolica'],
+            'Big Ben': ['Big Ben', 'Big Ben', 'Big Ben', 'Big Ben', 'ビッグ・ベン', 'Биг-Бен', 'Big Ben', 'Big Ben'],
+            'Foguete': ['Rocket', 'Cohete', 'Rakete', 'Foguete', 'ロケット', 'Ракета', 'Fusée', 'Razzo'],
+            'Monte Everest': ['Mount Everest', 'Monte Everest', 'Mount Everest', 'Monte Everest', 'エベレスト', 'Эверест', 'Mont Everest', 'Monte Everest'],
+            'Palmeira alta': ['Tall palm tree', 'Palmera alta', 'Hohe Palme', 'Palmeira alta', '高いヤシの木', 'Высокая пальма', 'Grand palmier', 'Palma alta']
+        };
+        const ROUND_LOCALES = ['en', 'es', 'de', 'pt-BR', 'ja', 'ru', 'fr', 'it'];
+        const REVEAL_TRANSLATIONS = {
+            about: ['about', 'aproximadamente', 'etwa', 'cerca de', '約', 'около', 'environ', 'circa'],
+            originally: ['originally', 'originalmente', 'ursprünglich', 'originalmente', '当初', 'изначально', 'à l’origine', 'originariamente'],
+            height: ['in height', 'de altura', 'hoch', 'de altura', 'の高さ', 'высотой', 'de hauteur', 'di altezza'],
+            altitude: ['above sea level', 'de altitud', 'über dem Meeresspiegel', 'de altitude', '標高', 'над уровнем моря', 'd’altitude', 'di altitudine']
+        };
+
+        function selectedLocale() {
+            const locale = localStorage.getItem('buuro-language-v1');
+            return ROUND_LOCALES.includes(locale) ? locale : 'pt-BR';
+        }
+
+        function localizedObjectName(name) {
+            const translations = ROUND_NAME_TRANSLATIONS[name];
+            return translations ? translations[ROUND_LOCALES.indexOf(selectedLocale())] : name;
+        }
+
+        function localizedReveal(reveal) {
+            const translations = REVEAL_TRANSLATIONS;
+            const locale = selectedLocale();
+            const localeIndex = ROUND_LOCALES.indexOf(locale);
+            if (locale === 'ja') {
+                const localized = reveal.replace(/^cerca de /, `${translations.about[localeIndex]} `);
+                if (localized.endsWith(' de altitude')) {
+                    return `標高 ${localized.slice(0, -' de altitude'.length)}`;
+                }
+                if (localized.endsWith(' originalmente')) {
+                    return `当初 ${localized.slice(0, -' originalmente'.length)}`;
+                }
+                if (localized.endsWith(' de altura')) {
+                    return `${localized.slice(0, -' de altura'.length)} の高さ`;
+                }
+                return localized;
+            }
+            return reveal
+                .replace(/^cerca de /, `${translations.about[localeIndex]} `)
+                .replace(/ originalmente$/, ` ${translations.originally[localeIndex]}`)
+                .replace(/ de altura$/, ` ${translations.height[localeIndex]}`)
+                .replace(/ de altitude$/, ` ${translations.altitude[localeIndex]}`);
+        }
+
+        const ROUNDS_PER_GAME = 10;
+        let roundIndex = 0;
+        let rounds = [];
+        let totalScore = 0;
+        let roundPointsAdded = 0;
+        let locked = false;
+        let correctHeight = 0;
+        const maxScore = ROUNDS_PER_GAME * 100;
+
+        const roundNumber = document.getElementById('round-num');
+        const totalScoreElement = document.getElementById('total-score');
+        const referenceShape = document.getElementById('reference-shape');
+        const targetShape = document.getElementById('target-shape');
+        const ghostShape = document.getElementById('ghost-shape');
+        const referenceName = document.getElementById('reference-name');
+        const targetName = document.getElementById('target-name');
+        const referenceSize = document.getElementById('reference-size');
+        const targetSize = document.getElementById('target-size');
+        const slider = document.getElementById('size-slider');
+        const feedback = document.getElementById('feedback');
+        const guessButton = document.getElementById('guess-button');
+        const nextButton = document.getElementById('next-button');
+        const backgroundMusic = document.getElementById('background-music');
+        const musicToggle = document.getElementById('music-toggle');
+        const musicStatus = document.getElementById('music-status');
+
+        musicToggle.addEventListener('click', async () => {
+            if (backgroundMusic.paused) {
+                try {
+                    await backgroundMusic.play();
+                    musicToggle.textContent = 'Pausar trilha sonora';
+                    musicToggle.setAttribute('aria-pressed', 'true');
+                    musicStatus.textContent = 'Trilha sonora ativada.';
+                } catch (error) {
+                    musicStatus.textContent = 'Não foi possível reproduzir a trilha sonora. Verifique se o arquivo está disponível.';
+                }
+                return;
+            }
+
+            backgroundMusic.pause();
+            musicToggle.textContent = 'Tocar trilha sonora';
+            musicToggle.setAttribute('aria-pressed', 'false');
+            musicStatus.textContent = 'Trilha sonora pausada.';
+        });
+
+        function loadRound() {
+            locked = false;
+            roundPointsAdded = 0;
+            const round = rounds[roundIndex];
+            const maxHeight = 260;
+            const largest = Math.max(round.reference.size, round.target.size);
+            const pixelsPerMeter = (maxHeight * 0.85) / largest;
+            const referenceHeight = Math.max(18, round.reference.size * pixelsPerMeter);
+            correctHeight = round.target.size * pixelsPerMeter;
+
+            roundNumber.textContent = `${roundIndex + 1} / ${rounds.length}`;
+            totalScoreElement.textContent = `${totalScore} / ${maxScore}`;
+            feedback.textContent = 'Use o controle para ajustar o tamanho';
+            updateRoundLabels();
+            referenceSize.textContent = '';
+            targetSize.textContent = '';
+            referenceShape.innerHTML = round.reference.shape;
+            targetShape.innerHTML = round.target.shape;
+            ghostShape.innerHTML = round.target.shape;
+            referenceShape.style.height = `${referenceHeight}px`;
+            targetShape.style.height = '100px';
+            ghostShape.style.height = `${correctHeight}px`;
+            ghostShape.style.display = 'none';
+            slider.value = '100';
+            slider.disabled = false;
+            guessButton.style.display = 'block';
+            nextButton.style.display = 'none';
+        }
+
+        function updateRoundLabels() {
+            if (!rounds.length) return;
+            const round = rounds[roundIndex];
+            referenceName.textContent = localizedObjectName(round.reference.name);
+            targetName.textContent = localizedObjectName(round.target.name);
+            if (locked) {
+                referenceSize.textContent = localizedReveal(round.reference.reveal);
+                targetSize.textContent = localizedReveal(round.target.reveal);
+            }
+        }
+
+        function shuffle(items) {
+            const shuffled = [...items];
+            for (let index = shuffled.length - 1; index > 0; index--) {
+                const randomIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+            }
+            return shuffled;
+        }
+
+        function startGame() {
+            rounds = shuffle(ROUND_POOL).slice(0, ROUNDS_PER_GAME);
+            roundIndex = 0;
+            totalScore = 0;
+            document.getElementById('game-area').style.display = 'block';
+            document.getElementById('game-over').style.display = 'none';
+            loadRound();
+        }
+
+        slider.addEventListener('input', () => {
+            if (!locked) targetShape.style.height = `${slider.value}px`;
+        });
+
+        guessButton.addEventListener('click', () => {
+            if (locked) return;
+            locked = true;
+            slider.disabled = true;
+            const guess = Number(slider.value);
+            const difference = Math.abs(guess - correctHeight);
+            const accuracy = Math.max(0, 1 - difference / correctHeight);
+            roundPointsAdded = Math.round(accuracy * 100);
+            totalScore += roundPointsAdded;
+
+            ghostShape.style.display = 'flex';
+            targetSize.textContent = localizedReveal(rounds[roundIndex].target.reveal);
+            referenceSize.textContent = localizedReveal(rounds[roundIndex].reference.reveal);
+            feedback.textContent = accuracy >= 0.9
+                ? `Excelente! Precisão de ${Math.round(accuracy * 100)}%.`
+                : `Boa tentativa! Precisão de ${Math.round(accuracy * 100)}%.`;
+            totalScoreElement.textContent = `${totalScore} / ${maxScore}`;
+            guessButton.style.display = 'none';
+            nextButton.style.display = 'block';
+
+            if (window.GameScoreCounter) {
+                window.GameScoreCounter.add('magnitude', roundPointsAdded);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            roundIndex++;
+            if (roundIndex >= rounds.length) {
+                document.getElementById('game-area').style.display = 'none';
+                document.getElementById('game-over').style.display = 'block';
+                document.getElementById('final-score').textContent = `${totalScore} / ${maxScore}`;
+                return;
+            }
+            loadRound();
+        });
+
+        window.addEventListener('buuro-language-changed', updateRoundLabels);
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'buuro-language-v1' || event.key === null) updateRoundLabels();
+        });
+
+        document.getElementById('restart-button').addEventListener('click', startGame);
+
+        document.getElementById('menu-button').addEventListener('click', () => {
+            window.location.href = 'index.html?menu=1#menu-container';
+        });
+
+        startGame();
+    </script>
+</body>
+</html>

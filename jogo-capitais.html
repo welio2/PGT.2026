@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitais dos Países</title>
+    <script src="game-language.js"></script>
+    <style>
+        :root {
+            --ink: #172033;
+            --paper: #f7f1df;
+            --gold: #f5c542;
+            --orange: #e87932;
+            --green: #287a67;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background: #000;
+        }
+
+        .game {
+            width: min(680px, 100%);
+            min-height: 560px;
+            border: 2px solid rgba(245,197,66,0.72);
+            border-radius: 8px;
+            background: linear-gradient(145deg, rgba(40,122,103,0.96), rgba(18,54,70,0.97) 58%, rgba(232,121,50,0.88));
+            box-shadow: 0 24px 70px rgba(245,197,66,0.12);
+            padding: clamp(24px, 5vw, 42px);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .topbar a {
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 0.86rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .music-button {
+            min-height: 38px;
+            border: 1px solid rgba(255,224,122,0.42);
+            border-radius: 6px;
+            background: rgba(255,224,122,0.16);
+            color: #fff;
+            padding: 0 10px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .music-status {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+        }
+
+        .stat {
+            min-width: 82px;
+            border: 1px solid rgba(245,197,66,0.32);
+            border-radius: 6px;
+            padding: 8px 10px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.78);
+        }
+
+        .stat strong {
+            display: block;
+            margin-top: 2px;
+            color: #fff;
+            font-size: 1.05rem;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: #ffe07a;
+            font-family: Arial, sans-serif;
+            font-size: 0.78rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            max-width: 560px;
+            color: #fff;
+            margin: 0 0 28px;
+            font-size: clamp(1.8rem, 5vw, 3.1rem);
+            line-height: 1.08;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .option {
+            min-height: 64px;
+            border: 1px solid rgba(255,224,122,0.42);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+        }
+
+        .option:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #ffe07a;
+            background: rgba(245,197,66,0.22);
+        }
+
+        .option.correct {
+            border-color: #ffe07a;
+            background: rgba(245,197,66,0.32);
+        }
+
+        .option.wrong {
+            border-color: #ff9179;
+            background: rgba(184,75,67,0.38);
+        }
+
+        .option:disabled { cursor: default; }
+
+        .feedback {
+            min-height: 48px;
+            margin: 18px 0 10px;
+            color: rgba(255,255,255,0.82);
+            font-family: Arial, sans-serif;
+            line-height: 1.45;
+        }
+
+        .next {
+            display: none;
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #1f765d, #e87932);
+            color: #fff;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-weight: 900;
+        }
+
+        .next.visible { display: block; }
+
+        .finish {
+            display: none;
+            text-align: center;
+        }
+
+        .finish.visible { display: block; }
+
+        .finish h2 {
+            margin: 18px 0 8px;
+            font-size: clamp(2.2rem, 7vw, 4.2rem);
+        }
+
+        .finish p { font-family: Arial, sans-serif; color: rgba(255,255,255,0.82); }
+
+        .finish button {
+            margin-top: 16px;
+            min-height: 48px;
+            border: 0;
+            border-radius: 6px;
+            padding: 0 24px;
+            background: linear-gradient(90deg, #f5c542, #e87932);
+            color: #fff;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-weight: 900;
+        }
+
+        @media (max-width: 560px) {
+            body { padding: 12px; }
+            .game { min-height: calc(100vh - 24px); padding: 20px 16px; }
+            .topbar { align-items: flex-start; }
+            .stats { flex-direction: column; align-items: flex-end; }
+            .stat { min-width: 74px; }
+            .options { grid-template-columns: 1fr; }
+            .option { min-height: 56px; }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+    <main class="game">
+        <div class="topbar">
+            <a href="index.html?menu=1#menu-container">← Voltar ao menu</a>
+            <div class="stats">
+                <button class="music-button" id="music-button" type="button" aria-pressed="false">Tocar trilha</button>
+                <div class="stat">Questão<strong id="progress">1/30</strong></div>
+                <div class="stat">Pontos<strong id="score">0</strong></div>
+            </div>
+        </div>
+
+        <section id="quiz">
+            <p class="eyebrow">Geografia mundial</p>
+            <h1 id="question">Qual é a capital?</h1>
+            <div class="options" id="options"></div>
+            <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+            <button class="next" id="next" type="button">Próxima pergunta</button>
+        </section>
+
+        <section class="finish" id="finish">
+            <p class="eyebrow">Resultado final</p>
+            <h2 id="final-score">0 pontos</h2>
+            <p id="final-message"></p>
+            <button id="restart" type="button">Jogar novamente</button>
+        </section>
+    </main>
+
+    <audio id="background-music" src="006.%20Uwa!!%20So%20Temperate%E2%99%AB%20(UNDERTALE%20Soundtrack)%20-%20Toby%20Fox%20-%20Toby%20Fox.mp3" loop preload="none"></audio>
+    <p class="music-status" id="music-status" role="status" aria-live="polite"></p>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const questions = [
+            ['Brasil', 'Brasília', ['Rio de Janeiro', 'Brasília', 'São Paulo', 'Salvador'], 'br'],
+            ['Japão', 'Tóquio', ['Quioto', 'Osaka', 'Tóquio', 'Nara'], 'jp'],
+            ['França', 'Paris', ['Lyon', 'Paris', 'Marselha', 'Bordéus'], 'fr'],
+            ['Argentina', 'Buenos Aires', ['Córdoba', 'Rosário', 'Buenos Aires', 'Mendoza'], 'ar'],
+            ['Portugal', 'Lisboa', ['Lisboa', 'Porto', 'Coimbra', 'Faro'], 'pt'],
+            ['Canadá', 'Ottawa', ['Toronto', 'Vancouver', 'Montreal', 'Ottawa'], 'ca'],
+            ['Egito', 'Cairo', ['Alexandria', 'Cairo', 'Giza', 'Luxor'], 'eg'],
+            ['Austrália', 'Camberra', ['Sydney', 'Melbourne', 'Camberra', 'Perth'], 'au'],
+            ['México', 'Cidade do México', ['Guadalajara', 'Monterrey', 'Cidade do México', 'Cancún'], 'mx'],
+            ['Itália', 'Roma', ['Milão', 'Roma', 'Veneza', 'Nápoles'], 'it'],
+            ['África do Sul', 'Pretória', ['Joanesburgo', 'Pretória', 'Cidade do Cabo', 'Durban'], 'za'],
+            ['Índia', 'Nova Deli', ['Mumbai', 'Nova Deli', 'Calcutá', 'Bangalor'], 'in'],
+            ['Alemanha', 'Berlim', ['Munique', 'Berlim', 'Hamburgo', 'Frankfurt'], 'de'],
+            ['Chile', 'Santiago', ['Valparaíso', 'Santiago', 'Concepción', 'Arica'], 'cl'],
+            ['Reino Unido', 'Londres', ['Manchester', 'Birmingham', 'Londres', 'Liverpool'], 'gb'],
+            ['Estados Unidos', 'Washington', ['Nova York', 'Washington', 'Chicago', 'Los Angeles'], 'us'],
+            ['Espanha', 'Madrid', ['Barcelona', 'Madrid', 'Sevilha', 'Valência'], 'es'],
+            ['China', 'Pequim', ['Xangai', 'Pequim', 'Hong Kong', 'Cantão'], 'cn'],
+            ['Rússia', 'Moscou', ['São Petersburgo', 'Moscou', 'Kazan', 'Novosibirsk'], 'ru'],
+            ['Coreia do Sul', 'Seul', ['Busan', 'Seul', 'Incheon', 'Daegu'], 'kr'],
+            ['Noruega', 'Oslo', ['Bergen', 'Oslo', 'Trondheim', 'Stavanger'], 'no'],
+            ['Suécia', 'Estocolmo', ['Gotemburgo', 'Estocolmo', 'Malmo', 'Uppsala'], 'se'],
+            ['Dinamarca', 'Copenhague', ['Aarhus', 'Odense', 'Copenhague', 'Aalborg'], 'dk'],
+            ['Grécia', 'Atenas', ['Salônica', 'Atenas', 'Heraclião', 'Patras'], 'gr'],
+            ['Turquia', 'Ankara', ['Istambul', 'Ankara', 'Izmir', 'Antália'], 'tr'],
+            ['Ucrânia', 'Kiev', ['Odessa', 'Kiev', 'Leópolis', 'Kharkiv'], 'ua'],
+            ['Suíça', 'Berna', ['Zurique', 'Genebra', 'Berna', 'Basel'], 'ch'],
+            ['Holanda', 'Amsterdã', ['Roterdã', 'Amsterdã', 'Haia', 'Utrecht'], 'nl'],
+            ['Colômbia', 'Bogotá', ['Medellín', 'Bogotá', 'Cali', 'Barranquilla'], 'co'],
+            ['Peru', 'Lima', ['Cusco', 'Arequipa', 'Lima', 'Trujillo'], 'pe'],
+            ['Paraguai', 'Assunção', ['Assunção', 'Cidade do Leste', 'Encarnación', 'Luque'], 'py'],
+            ['Uruguai', 'Montevidéu', ['Punta del Este', 'Montevidéu', 'Salto', 'Maldonado'], 'uy'],
+            ['Nova Zelândia', 'Wellington', ['Auckland', 'Wellington', 'Christchurch', 'Hamilton'], 'nz']
+        ];
+
+        const cityTranslations = {
+            en: {
+                'Tóquio': 'Tokyo', 'Quioto': 'Kyoto', 'Marselha': 'Marseille', 'Bordéus': 'Bordeaux',
+                'Rosário': 'Rosario', 'Lisboa': 'Lisbon', 'Camberra': 'Canberra', 'Cidade do México': 'Mexico City',
+                'Cancún': 'Cancun', 'Milão': 'Milan', 'Veneza': 'Venice', 'Roma': 'Rome', 'Nápoles': 'Naples', 'Joanesburgo': 'Johannesburg',
+                'Pretória': 'Pretoria', 'Cidade do Cabo': 'Cape Town', 'Nova Deli': 'New Delhi',
+                'Calcutá': 'Kolkata', 'Bangalor': 'Bengaluru', 'Munique': 'Munich', 'Hamburgo': 'Hamburg',
+                'Concepción': 'Concepcion',
+                'Londres': 'London', 'Nova York': 'New York', 'Sevilha': 'Seville', 'Valência': 'Valencia',
+                'Xangai': 'Shanghai', 'Pequim': 'Beijing', 'Cantão': 'Guangzhou', 'São Petersburgo': 'Saint Petersburg',
+                'Moscou': 'Moscow', 'Seul': 'Seoul', 'Gotemburgo': 'Gothenburg', 'Malmo': 'Malmö',
+                'Copenhague': 'Copenhagen', 'Salônica': 'Thessaloniki', 'Istambul': 'Istanbul', 'Antália': 'Antalya',
+                'Kiev': 'Kyiv', 'Leópolis': 'Lviv', 'Zurique': 'Zurich', 'Berna': 'Bern', 'Roterdã': 'Rotterdam',
+                'Amsterdã': 'Amsterdam', 'Haia': 'The Hague', 'Bogotá': 'Bogota', 'Cusco': 'Cuzco',
+                'Genebra': 'Geneva', 'Heraclião': 'Heraklion', 'Atenas': 'Athens', 'Berlim': 'Berlin',
+                'Cidade do Leste': 'Ciudad del Este',
+                'Assunção': 'Asunción', 'Montevidéu': 'Montevideo'
+            },
+            es: {
+                'Tóquio': 'Tokio', 'Quioto': 'Kioto', 'Marselha': 'Marsella', 'Bordéus': 'Burdeos',
+                'Rosário': 'Rosario', 'Lisboa': 'Lisboa', 'Cairo': 'El Cairo', 'Camberra': 'Canberra', 'Berlim': 'Berlín',
+                'Cidade do México': 'Ciudad de México', 'Cancún': 'Cancún', 'Milão': 'Milán',
+                'Veneza': 'Venecia', 'Nápoles': 'Nápoles',
+                'Joanesburgo': 'Johannesburgo', 'Pretória': 'Pretoria',
+                'Cidade do Cabo': 'Ciudad del Cabo', 'Nova Deli': 'Nueva Delhi',
+                'Calcutá': 'Calcuta', 'Bangalor': 'Bangalore', 'Munique': 'Múnich', 'Concepción': 'Concepción',
+                'Londres': 'Londres', 'Nova York': 'Nueva York', 'Sevilha': 'Sevilla', 'Valência': 'Valencia',
+                'Xangai': 'Shanghái', 'Pequim': 'Pekín', 'Cantão': 'Cantón', 'São Petersburgo': 'San Petersburgo',
+                'Moscou': 'Moscú', 'Seul': 'Seúl', 'Gotemburgo': 'Gotemburgo', 'Malmo': 'Malmö',
+                'Copenhague': 'Copenhague', 'Salônica': 'Salónica', 'Heraclião': 'Heraclión',
+                'Istambul': 'Estambul', 'Antália': 'Antalya',
+                'Kiev': 'Kiev', 'Leópolis': 'Leópolis', 'Zurique': 'Zúrich', 'Berna': 'Berna',
+                'Roterdã': 'Róterdam', 'Amsterdã': 'Ámsterdam', 'Haia': 'La Haya', 'Bogotá': 'Bogotá',
+                'Genebra': 'Ginebra', 'Alexandria': 'Alejandría', 'Luxor': 'Lúxor',
+                'Izmir': 'Esmirna', 'Roma': 'Roma',
+                'Cidade do Leste': 'Ciudad del Este',
+                'Assunção': 'Asunción', 'Montevidéu': 'Montevideo'
+            },
+            de: {
+                'Tóquio': 'Tokio', 'Quioto': 'Kyoto', 'Marselha': 'Marseille', 'Bordéus': 'Bordeaux',
+                'Rosário': 'Rosario', 'Lisboa': 'Lissabon', 'Cairo': 'Kairo', 'Camberra': 'Canberra',
+                'Cidade do México': 'Mexiko-Stadt', 'Milão': 'Mailand', 'Veneza': 'Venedig', 'Nápoles': 'Neapel',
+                'Joanesburgo': 'Johannesburg', 'Pretória': 'Pretoria', 'Cidade do Cabo': 'Kapstadt', 'Nova Deli': 'Neu-Delhi',
+                'Calcutá': 'Kalkutta', 'Bangalor': 'Bangalore', 'Munique': 'München', 'Hamburgo': 'Hamburg', 'Londres': 'London',
+                'Nova York': 'New York', 'Sevilha': 'Sevilla', 'Xangai': 'Shanghai', 'Pequim': 'Peking',
+                'Cantão': 'Kanton', 'São Petersburgo': 'Sankt Petersburg', 'Moscou': 'Moskau', 'Seul': 'Seoul',
+                'Gotemburgo': 'Göteborg', 'Malmo': 'Malmö', 'Copenhague': 'Kopenhagen', 'Salônica': 'Thessaloniki',
+                'Istambul': 'Istanbul', 'Antália': 'Antalya', 'Heraclião': 'Iraklio', 'Kiev': 'Kyjiw', 'Leópolis': 'Lwiw',
+                'Zurique': 'Zürich', 'Berna': 'Bern', 'Genebra': 'Genf', 'Valência': 'Valencia',
+                'Alexandria': 'Alexandria', 'Giza': 'Gizeh', 'Roma': 'Rom', 'Berlim': 'Berlin',
+                'Atenas': 'Athen', 'Roterdã': 'Rotterdam', 'Amsterdã': 'Amsterdam',
+                'Haia': 'Den Haag', 'Bogotá': 'Bogota', 'Cidade do Leste': 'Ciudad del Este',
+                'Assunção': 'Asunción', 'Montevidéu': 'Montevideo'
+            },
+            ja: {
+                'Rio de Janeiro': 'リオデジャネイロ', 'Brasília': 'ブラジリア', 'São Paulo': 'サンパウロ', 'Salvador': 'サルヴァドール',
+                'Quioto': '京都', 'Osaka': '大阪', 'Tóquio': '東京', 'Nara': '奈良',
+                'Lyon': 'リヨン', 'Paris': 'パリ', 'Marselha': 'マルセイユ', 'Bordéus': 'ボルドー',
+                'Córdoba': 'コルドバ', 'Rosário': 'ロサリオ', 'Buenos Aires': 'ブエノスアイレス', 'Mendoza': 'メンドーサ',
+                'Lisboa': 'リスボン', 'Porto': 'ポルト', 'Coimbra': 'コインブラ', 'Faro': 'ファロ',
+                'Toronto': 'トロント', 'Vancouver': 'バンクーバー', 'Montreal': 'モントリオール', 'Ottawa': 'オタワ',
+                'Alexandria': 'アレクサンドリア', 'Cairo': 'カイロ', 'Giza': 'ギザ', 'Luxor': 'ルクソール',
+                'Sydney': 'シドニー', 'Melbourne': 'メルボルン', 'Camberra': 'キャンベラ', 'Perth': 'パース',
+                'Guadalajara': 'グアダラハラ', 'Monterrey': 'モンテレイ', 'Cidade do México': 'メキシコシティ', 'Cancún': 'カンクン',
+                'Milão': 'ミラノ', 'Roma': 'ローマ', 'Veneza': 'ベネチア', 'Nápoles': 'ナポリ',
+                'Joanesburgo': 'ヨハネスブルグ', 'Pretória': 'プレトリア', 'Cidade do Cabo': 'ケープタウン', 'Durban': 'ダーバン',
+                'Mumbai': 'ムンバイ', 'Nova Deli': 'ニューデリー', 'Calcutá': 'コルカタ', 'Bangalor': 'ベンガルール',
+                'Munique': 'ミュンヘン', 'Berlim': 'ベルリン', 'Hamburgo': 'ハンブルク', 'Frankfurt': 'フランクフルト',
+                'Valparaíso': 'バルパライソ', 'Santiago': 'サンティアゴ', 'Concepción': 'コンセプシオン', 'Arica': 'アリカ',
+                'Manchester': 'マンチェスター', 'Birmingham': 'バーミンガム', 'Londres': 'ロンドン', 'Liverpool': 'リバプール',
+                'Nova York': 'ニューヨーク', 'Washington': 'ワシントン', 'Chicago': 'シカゴ', 'Los Angeles': 'ロサンゼルス',
+                'Barcelona': 'バルセロナ', 'Madrid': 'マドリード', 'Sevilha': 'セビリア', 'Valência': 'バレンシア',
+                'Xangai': '上海', 'Pequim': '北京', 'Hong Kong': '香港', 'Cantão': '広州',
+                'São Petersburgo': 'サンクトペテルブルク', 'Moscou': 'モスクワ', 'Kazan': 'カザン', 'Novosibirsk': 'ノボシビルスク',
+                'Busan': '釜山', 'Seul': 'ソウル', 'Incheon': '仁川', 'Daegu': '大邱',
+                'Bergen': 'ベルゲン', 'Oslo': 'オスロ', 'Trondheim': 'トロンハイム', 'Stavanger': 'スタヴァンゲル',
+                'Gotemburgo': 'ヨーテボリ', 'Estocolmo': 'ストックホルム', 'Malmo': 'マルメ', 'Uppsala': 'ウプサラ',
+                'Aarhus': 'オーフス', 'Odense': 'オーデンセ', 'Copenhague': 'コペンハーゲン', 'Aalborg': 'オールボー',
+                'Salônica': 'テッサロニキ', 'Atenas': 'アテネ', 'Heraclião': 'イラクリオン', 'Patras': 'パトラ',
+                'Istambul': 'イスタンブール', 'Ankara': 'アンカラ', 'Izmir': 'イズミル', 'Antália': 'アンタルヤ',
+                'Odessa': 'オデッサ', 'Kiev': 'キーウ', 'Leópolis': 'リヴィウ', 'Kharkiv': 'ハルキウ',
+                'Zurique': 'チューリッヒ', 'Genebra': 'ジュネーブ', 'Berna': 'ベルン', 'Basel': 'バーゼル',
+                'Roterdã': 'ロッテルダム', 'Amsterdã': 'アムステルダム', 'Haia': 'ハーグ', 'Utrecht': 'ユトレヒト',
+                'Medellín': 'メデジン', 'Bogotá': 'ボゴタ', 'Cali': 'カリ', 'Barranquilla': 'バランキージャ',
+                'Cusco': 'クスコ', 'Arequipa': 'アレキパ', 'Lima': 'リマ', 'Trujillo': 'トルヒーリョ',
+                'Assunção': 'アスンシオン', 'Cidade do Leste': 'シウダー・デル・エステ', 'Encarnación': 'エンカルナシオン', 'Luque': 'ルケ',
+                'Punta del Este': 'プンタ・デル・エステ', 'Montevidéu': 'モンテビデオ', 'Salto': 'サルト', 'Maldonado': 'マルドナド',
+                'Auckland': 'オークランド', 'Wellington': 'ウェリントン', 'Christchurch': 'クライストチャーチ', 'Hamilton': 'ハミルトン'
+            },
+            ru: {
+                'Rio de Janeiro': 'Рио-де-Жанейро', 'Brasília': 'Бразилиа', 'São Paulo': 'Сан-Паулу', 'Salvador': 'Салвадор',
+                'Quioto': 'Киото', 'Osaka': 'Осака', 'Tóquio': 'Токио', 'Nara': 'Нара',
+                'Lyon': 'Лион', 'Paris': 'Париж', 'Marselha': 'Марсель', 'Bordéus': 'Бордо',
+                'Córdoba': 'Кордова', 'Rosário': 'Росарио', 'Buenos Aires': 'Буэнос-Айрес', 'Mendoza': 'Мендоса',
+                'Lisboa': 'Лиссабон', 'Porto': 'Порту', 'Coimbra': 'Коимбра', 'Faro': 'Фару',
+                'Toronto': 'Торонто', 'Vancouver': 'Ванкувер', 'Montreal': 'Монреаль', 'Ottawa': 'Оттава',
+                'Alexandria': 'Александрия', 'Cairo': 'Каир', 'Giza': 'Гиза', 'Luxor': 'Луксор',
+                'Sydney': 'Сидней', 'Melbourne': 'Мельбурн', 'Camberra': 'Канберра', 'Perth': 'Перт',
+                'Guadalajara': 'Гвадалахара', 'Monterrey': 'Монтеррей', 'Cidade do México': 'Мехико', 'Cancún': 'Канкун',
+                'Milão': 'Милан', 'Roma': 'Рим', 'Veneza': 'Венеция', 'Nápoles': 'Неаполь',
+                'Joanesburgo': 'Йоханнесбург', 'Pretória': 'Претория', 'Cidade do Cabo': 'Кейптаун', 'Durban': 'Дурбан',
+                'Mumbai': 'Мумбаи', 'Nova Deli': 'Нью-Дели', 'Calcutá': 'Калькутта', 'Bangalor': 'Бенгалуру',
+                'Munique': 'Мюнхен', 'Berlim': 'Берлин', 'Hamburgo': 'Гамбург', 'Frankfurt': 'Франкфурт',
+                'Valparaíso': 'Вальпараисо', 'Santiago': 'Сантьяго', 'Concepción': 'Консепсьон', 'Arica': 'Арика',
+                'Manchester': 'Манчестер', 'Birmingham': 'Бирмингем', 'Londres': 'Лондон', 'Liverpool': 'Ливерпуль',
+                'Nova York': 'Нью-Йорк', 'Washington': 'Вашингтон', 'Chicago': 'Чикаго', 'Los Angeles': 'Лос-Анджелес',
+                'Barcelona': 'Барселона', 'Madrid': 'Мадрид', 'Sevilha': 'Севилья', 'Valência': 'Валенсия',
+                'Xangai': 'Шанхай', 'Pequim': 'Пекин', 'Hong Kong': 'Гонконг', 'Cantão': 'Гуанчжоу',
+                'São Petersburgo': 'Санкт-Петербург', 'Moscou': 'Москва', 'Kazan': 'Казань', 'Novosibirsk': 'Новосибирск',
+                'Busan': 'Пусан', 'Seul': 'Сеул', 'Incheon': 'Инчхон', 'Daegu': 'Тэгу',
+                'Bergen': 'Берген', 'Oslo': 'Осло', 'Trondheim': 'Тронхейм', 'Stavanger': 'Ставангер',
+                'Gotemburgo': 'Гётеборг', 'Estocolmo': 'Стокгольм', 'Malmo': 'Мальмё', 'Uppsala': 'Уппсала',
+                'Aarhus': 'Орхус', 'Odense': 'Оденсе', 'Copenhague': 'Копенгаген', 'Aalborg': 'Ольборг',
+                'Salônica': 'Салоники', 'Atenas': 'Афины', 'Heraclião': 'Ираклион', 'Patras': 'Патры',
+                'Istambul': 'Стамбул', 'Ankara': 'Анкара', 'Izmir': 'Измир', 'Antália': 'Анталья',
+                'Odessa': 'Одесса', 'Kiev': 'Киев', 'Leópolis': 'Львов', 'Kharkiv': 'Харьков',
+                'Zurique': 'Цюрих', 'Genebra': 'Женева', 'Berna': 'Берн', 'Basel': 'Базель',
+                'Roterdã': 'Роттердам', 'Amsterdã': 'Амстердам', 'Haia': 'Гаага', 'Utrecht': 'Утрехт',
+                'Medellín': 'Медельин', 'Bogotá': 'Богота', 'Cali': 'Кали', 'Barranquilla': 'Барранкилья',
+                'Cusco': 'Куско', 'Arequipa': 'Арекипа', 'Lima': 'Лима', 'Trujillo': 'Трухильо',
+                'Assunção': 'Асунсьон', 'Cidade do Leste': 'Сьюдад-дель-Эсте', 'Encarnación': 'Энкарнасьон', 'Luque': 'Луке',
+                'Punta del Este': 'Пунта-дель-Эсте', 'Montevidéu': 'Монтевидео', 'Salto': 'Сальто', 'Maldonado': 'Мальдонадо',
+                'Auckland': 'Окленд', 'Wellington': 'Веллингтон', 'Christchurch': 'Крайстчерч', 'Hamilton': 'Гамильтон'
+            },
+            fr: {
+                'Tóquio': 'Tokyo', 'Quioto': 'Kyoto', 'Marselha': 'Marseille', 'Bordéus': 'Bordeaux',
+                'Rosário': 'Rosario', 'Lisboa': 'Lisbonne', 'Cairo': 'Le Caire', 'Camberra': 'Canberra',
+                'Cidade do México': 'Mexico', 'Milão': 'Milan', 'Nápoles': 'Naples', 'Joanesburgo': 'Johannesburg',
+                'Pretória': 'Pretoria', 'Cidade do Cabo': 'Le Cap', 'Nova Deli': 'New Delhi',
+                'Calcutá': 'Calcutta', 'Bangalor': 'Bangalore', 'Munique': 'Munich', 'Concepción': 'Concepción',
+                'Londres': 'Londres', 'Nova York': 'New York', 'Sevilha': 'Séville', 'Valência': 'Valence',
+                'Xangai': 'Shanghai', 'Pequim': 'Pékin', 'Cantão': 'Canton', 'São Petersburgo': 'Saint-Pétersbourg',
+                'Moscou': 'Moscou', 'Seul': 'Séoul', 'Gotemburgo': 'Göteborg', 'Malmo': 'Malmö',
+                'Copenhague': 'Copenhague', 'Salônica': 'Thessalonique', 'Heraclião': 'Héraklion',
+                'Istambul': 'Istanbul', 'Antália': 'Antalya',
+                'Kiev': 'Kyiv', 'Leópolis': 'Lviv', 'Zurique': 'Zurich', 'Berna': 'Berne', 'Genebra': 'Genève',
+                'Alexandria': 'Alexandrie', 'Giza': 'Gizeh', 'Luxor': 'Louxor', 'Hamburgo': 'Hambourg',
+                'Roma': 'Rome', 'Atenas': 'Athènes', 'Montreal': 'Montréal', 'Veneza': 'Venise',
+                'Berlim': 'Berlin', 'Cidade do Leste': 'Ciudad del Este',
+                'Roterdã': 'Rotterdam', 'Amsterdã': 'Amsterdam', 'Haia': 'La Haye', 'Bogotá': 'Bogota',
+                'Assunção': 'Asunción', 'Montevidéu': 'Montevideo'
+            },
+            it: {
+                'Tóquio': 'Tokyo', 'Quioto': 'Kyoto', 'Marselha': 'Marsiglia', 'Bordéus': 'Bordeaux',
+                'Rosário': 'Rosario', 'Lisboa': 'Lisbona', 'Cairo': 'Il Cairo', 'Camberra': 'Canberra',
+                'Cidade do México': 'Città del Messico', 'Milão': 'Milano', 'Nápoles': 'Napoli',
+                'Joanesburgo': 'Johannesburg', 'Pretória': 'Pretoria', 'Cidade do Cabo': 'Città del Capo',
+                'Nova Deli': 'Nuova Delhi', 'Calcutá': 'Calcutta', 'Bangalor': 'Bangalore', 'Munique': 'Monaco di Baviera',
+                'Londres': 'Londra', 'Nova York': 'New York', 'Sevilha': 'Siviglia', 'Valência': 'Valencia',
+                'Xangai': 'Shanghai', 'Pequim': 'Pechino', 'Cantão': 'Canton', 'São Petersburgo': 'San Pietroburgo',
+                'Moscou': 'Mosca', 'Seul': 'Seoul', 'Gotemburgo': 'Göteborg', 'Malmo': 'Malmö',
+                'Copenhague': 'Copenaghen', 'Salônica': 'Salonicco', 'Heraclião': 'Iraklio',
+                'Istambul': 'Istanbul', 'Antália': 'Antalya',
+                'Kiev': 'Kyiv', 'Leópolis': 'Leopoli', 'Zurique': 'Zurigo', 'Berna': 'Berna', 'Genebra': 'Ginevra',
+                'Alexandria': 'Alessandria', 'Roma': 'Roma', 'Atenas': 'Atene',
+                'Lyon': 'Lione', 'Montreal': 'Montréal', 'Veneza': 'Venezia', 'Berlim': 'Berlino',
+                'Hamburgo': 'Amburgo',
+                'Cidade do Leste': 'Ciudad del Este',
+                'Roterdã': 'Rotterdam', 'Amsterdã': 'Amsterdam', 'Haia': 'L’Aia', 'Bogotá': 'Bogotá',
+                'Assunção': 'Asunción', 'Montevidéu': 'Montevideo'
+            }
+        };
+
+        const englishCountryArticles = { gb: 'the ', us: 'the ', nl: 'the ' };
+        const spanishCountryArticles = { us: 'los ', nl: 'los ' };
+
+        const questionMessages = {
+            en: { correct: 'Correct! You earned 100 points.', wrong: 'Not this time. The correct capital is {capital}.' },
+            es: { correct: '¡Correcto! Has ganado 100 puntos.', wrong: 'Esta vez no. La capital correcta es {capital}.' },
+            de: { correct: 'Richtig! Du hast 100 Punkte erhalten.', wrong: 'Diesmal leider nicht. Die richtige Hauptstadt ist {capital}.' },
+            'pt-BR': { correct: 'Resposta correta! Você ganhou 100 pontos.', wrong: 'Não foi desta vez. A capital correta é {capital}.' },
+            ja: { correct: '正解！100ポイント獲得しました。', wrong: '残念！正しい首都は{capital}です。' },
+            ru: { correct: 'Правильно! Вы получили 100 очков.', wrong: 'Не в этот раз. Правильная столица — {capital}.' },
+            fr: { correct: 'Bonne réponse ! Vous avez gagné 100 points.', wrong: 'Pas cette fois. La bonne capitale est {capital}.' },
+            it: { correct: 'Risposta corretta! Hai guadagnato 100 punti.', wrong: 'Non questa volta. La capitale corretta è {capital}.' }
+        };
+
+        const frenchCountryArticles = {
+            br: 'du ', jp: 'du ', fr: 'de la ', ar: 'de l’', pt: 'du ', ca: 'du ', eg: 'de l’',
+            au: 'de l’', mx: 'du ', it: 'de l’', za: 'de l’', in: 'de l’', de: 'de l’',
+            cl: 'du ', gb: 'du ', us: 'des ', es: 'de l’', cn: 'de la ', ru: 'de la ',
+            kr: 'de la ', no: 'de la ', se: 'de la ', dk: 'du ', gr: 'de la ', tr: 'de la ',
+            ua: 'de l’', ch: 'de la ', nl: 'des ', co: 'de la ', pe: 'du ', py: 'du ',
+            uy: 'de l’', nz: 'de la '
+        };
+
+        const portugueseCountryArticles = {
+            br: 'do ', jp: 'do ', fr: 'da ', ar: 'da ', pt: 'de ', ca: 'do ', eg: 'do ',
+            au: 'da ', mx: 'do ', it: 'da ', za: 'da ', in: 'da ', de: 'da ', cl: 'do ',
+            gb: 'do ', us: 'dos ', es: 'da ', cn: 'da ', ru: 'da ', kr: 'da ', no: 'da ',
+            se: 'da ', dk: 'da ', gr: 'da ', tr: 'da ', ua: 'da ', ch: 'da ', nl: 'dos ',
+            co: 'da ', pe: 'do ', py: 'do ', uy: 'do ', nz: 'da '
+        };
+
+        const italianCountryArticles = {
+            br: 'del ', jp: 'del ', fr: 'della ', ar: 'dell’', pt: 'del ', ca: 'del ',
+            eg: 'dell’', au: 'dell’', mx: 'del ', it: 'dell’', za: 'del ', in: 'dell’',
+            de: 'della ', cl: 'del ', gb: 'del ', us: 'degli ', es: 'della ', cn: 'della ',
+            ru: 'della ', kr: 'della ', no: 'della ', se: 'della ', dk: 'della ', gr: 'della ',
+            tr: 'della ', ua: 'dell’', ch: 'della ', nl: 'dei ', co: 'della ', pe: 'del ',
+            py: 'del ', uy: 'dell’', nz: 'della '
+        };
+
+        const russianCountryGenitives = {
+            br: 'Бразилии', jp: 'Японии', fr: 'Франции', ar: 'Аргентины', pt: 'Португалии',
+            ca: 'Канады', eg: 'Египта', au: 'Австралии', mx: 'Мексики', it: 'Италии',
+            za: 'Южной Африки', in: 'Индии', de: 'Германии', cl: 'Чили',
+            gb: 'Соединённого Королевства', us: 'Соединённых Штатов', es: 'Испании',
+            cn: 'Китая', ru: 'России', kr: 'Южной Кореи', no: 'Норвегии', se: 'Швеции',
+            dk: 'Дании', gr: 'Греции', tr: 'Турции', ua: 'Украины', ch: 'Швейцарии',
+            nl: 'Нидерландов', co: 'Колумбии', pe: 'Перу', py: 'Парагвая',
+            uy: 'Уругвая', nz: 'Новой Зеландии'
+        };
+
+        function localizeCity(city) {
+            const language = window.BuuroGameLanguage.language;
+            return (cityTranslations[language] && cityTranslations[language][city]) || city;
+        }
+
+        const quiz = document.getElementById('quiz');
+        const finish = document.getElementById('finish');
+        const question = document.getElementById('question');
+        const options = document.getElementById('options');
+        const feedback = document.getElementById('feedback');
+        const progress = document.getElementById('progress');
+        const scoreDisplay = document.getElementById('score');
+        const nextButton = document.getElementById('next');
+        const restartButton = document.getElementById('restart');
+        const backgroundMusic = document.getElementById('background-music');
+        const musicButton = document.getElementById('music-button');
+        const musicStatus = document.getElementById('music-status');
+        let round = 0;
+        let score = 0;
+        let selectedQuestions = [];
+        let answered = false;
+        let lastAnswerChoice = null;
+
+        musicButton.addEventListener('click', async () => {
+            if (!backgroundMusic.paused) {
+                backgroundMusic.pause();
+                return;
+            }
+
+            try {
+                await backgroundMusic.play();
+                musicButton.textContent = 'Pausar trilha';
+                musicButton.setAttribute('aria-pressed', 'true');
+                musicStatus.textContent = 'Trilha sonora em reprodução.';
+            } catch (error) {
+                musicStatus.textContent = 'Não foi possível reproduzir a trilha sonora.';
+            }
+        });
+
+        backgroundMusic.addEventListener('pause', () => {
+            if (backgroundMusic.currentTime > 0) {
+                musicButton.textContent = 'Tocar trilha';
+                musicButton.setAttribute('aria-pressed', 'false');
+                musicStatus.textContent = 'Trilha sonora pausada.';
+            }
+        });
+
+        function shuffle(items) {
+            return [...items].sort(() => Math.random() - 0.5);
+        }
+
+        function startGame() {
+            round = 0;
+            score = 0;
+            answered = false;
+            lastAnswerChoice = null;
+            selectedQuestions = shuffle(questions).slice(0, 30);
+            scoreDisplay.textContent = '0';
+            quiz.style.display = '';
+            finish.classList.remove('visible');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            answered = false;
+            nextButton.classList.remove('visible');
+            feedback.textContent = '';
+            const [country, capital, choices, countryCode] = selectedQuestions[round];
+            progress.textContent = `${round + 1}/${selectedQuestions.length}`;
+            question.dataset.country = country;
+            question.dataset.countryCode = countryCode;
+            localizeCapitalQuestion();
+            options.textContent = '';
+
+            shuffle(choices).forEach((choice) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'option';
+                button.textContent = localizeCity(choice);
+                button.dataset.answer = choice;
+                button.addEventListener('click', () => answer(button, choice, capital));
+                options.appendChild(button);
+            });
+        }
+
+        function localizeCapitalQuestion() {
+            const language = window.BuuroGameLanguage.language;
+            const localizedCountry = window.BuuroGameLanguage.regionName(
+                question.dataset.countryCode,
+                question.dataset.country
+            );
+            const countryCode = question.dataset.countryCode;
+            if (language === 'fr') {
+                question.textContent = `Quelle est la capitale ${frenchCountryArticles[countryCode]}${localizedCountry} ?`;
+            } else if (language === 'pt-BR') {
+                question.textContent = `Qual é a capital ${portugueseCountryArticles[countryCode]}${localizedCountry}?`;
+            } else if (language === 'it') {
+                question.textContent = `Qual è la capitale ${italianCountryArticles[countryCode]}${localizedCountry}?`;
+            } else if (language === 'ru') {
+                question.textContent = `Какова столица ${russianCountryGenitives[countryCode]}?`;
+            } else if (language === 'en') {
+                question.textContent = `What is the capital of ${englishCountryArticles[countryCode] || ''}${localizedCountry}?`;
+            } else if (language === 'es') {
+                question.textContent = `¿Cuál es la capital de ${spanishCountryArticles[countryCode] || ''}${localizedCountry}?`;
+            } else {
+                question.textContent = window.BuuroGameLanguage.capitalQuestion(localizedCountry);
+            }
+            Array.from(options.children).forEach((option) => {
+                option.textContent = localizeCity(option.dataset.answer);
+            });
+
+            if (answered && lastAnswerChoice !== null) {
+                const messages = questionMessages[language];
+                feedback.textContent = lastAnswerChoice === selectedQuestions[round][1]
+                    ? messages.correct
+                    : messages.wrong.replace('{capital}', localizeCity(selectedQuestions[round][1]));
+            }
+        }
+
+        function answer(button, choice, capital) {
+            if (answered) return;
+            answered = true;
+            lastAnswerChoice = choice;
+            const correct = choice === capital;
+
+            Array.from(options.children).forEach((option) => {
+                option.disabled = true;
+                if (option.dataset.answer === capital) option.classList.add('correct');
+            });
+
+            if (correct) {
+                button.classList.add('correct');
+                score += 100;
+                scoreDisplay.textContent = score;
+                feedback.textContent = questionMessages[window.BuuroGameLanguage.language].correct;
+            } else {
+                button.classList.add('wrong');
+                feedback.textContent = questionMessages[window.BuuroGameLanguage.language].wrong
+                    .replace('{capital}', localizeCity(capital));
+            }
+
+            nextButton.textContent = round === selectedQuestions.length - 1 ? 'Ver resultado' : 'Próxima pergunta';
+            nextButton.classList.add('visible');
+        }
+
+        window.addEventListener('buuro-language-applied', localizeCapitalQuestion);
+        nextButton.addEventListener('click', () => {
+            if (round < selectedQuestions.length - 1) {
+                round += 1;
+                renderQuestion();
+            } else {
+                finishGame();
+            }
+        });
+
+        function finishGame() {
+            quiz.style.display = 'none';
+            finish.classList.add('visible');
+            document.getElementById('final-score').textContent = `${score} pontos`;
+            const correctAnswers = score / 100;
+            document.getElementById('final-message').textContent =
+                `Você acertou ${correctAnswers} de ${selectedQuestions.length} perguntas.`;
+
+            if (window.GameScoreCounter && score > 0) {
+                window.GameScoreCounter.add('capitais', score);
+            }
+        }
+
+        restartButton.addEventListener('click', startGame);
+        startGame();
+    </script>
+</body>
+</html>

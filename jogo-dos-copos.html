@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jogo dos Copos | Buuro</title>
+    <script src="game-language.js" defer></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --background: #090f1e;
+            --panel: #151f33;
+            --muted: #aab6cb;
+            --gold: #f5c542;
+            --green: #4ade80;
+            --red: #fb7185;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle at top, #263653, var(--background) 65%);
+            color: #f8fafc;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+        }
+
+        .game {
+            width: min(100%, 760px);
+            padding: clamp(20px, 5vw, 42px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            background: rgba(21,31,51,0.92);
+            box-shadow: 0 28px 80px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--gold);
+            font-size: clamp(2rem, 7vw, 3rem);
+        }
+
+        .intro {
+            max-width: 560px;
+            margin: 10px auto 22px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .score-item {
+            min-width: 125px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            color: var(--muted);
+        }
+
+        .score-item strong {
+            display: block;
+            margin-top: 3px;
+            color: #fff;
+            font-size: 1.25rem;
+        }
+
+        .cups-area {
+            position: relative;
+            height: 230px;
+            margin: 10px 0 16px;
+            overflow: hidden;
+            border-bottom: 5px solid #63708a;
+            border-radius: 18px 18px 8px 8px;
+            background: linear-gradient(180deg, rgba(7,12,23,0.28), rgba(7,12,23,0.6));
+        }
+
+        .cup {
+            position: absolute;
+            top: 16px;
+            width: min(18%, 110px);
+            height: 190px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            transform: translateX(-50%);
+            transition: left 460ms cubic-bezier(0.2,0.75,0.25,1);
+        }
+
+        .cup:disabled { cursor: default; }
+
+        .cup:focus-visible,
+        button:focus-visible,
+        a:focus-visible {
+            outline: 3px solid #fff;
+            outline-offset: 4px;
+        }
+
+        .cup-art {
+            position: absolute;
+            z-index: 2;
+            left: 50%;
+            bottom: 32px;
+            width: min(100%, 112px);
+            height: 118px;
+            border: 3px solid #ffdc72;
+            border-radius: 9px 9px 28px 28px;
+            background: linear-gradient(105deg, #f8c64b, #b97819 48%, #f5c542);
+            box-shadow: inset 8px 0 12px rgba(255,255,255,0.2), 0 13px 20px rgba(0,0,0,0.28);
+            transform: translate(-50%, 0);
+            transition: transform 360ms ease;
+            clip-path: polygon(0 0, 100% 0, 83% 100%, 17% 100%);
+        }
+
+        .cup-art::before {
+            position: absolute;
+            top: 6px;
+            left: 10%;
+            width: 80%;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,244,190,0.7);
+            content: "";
+        }
+
+        .cup.lifted .cup-art { transform: translate(-50%, -48px); }
+
+        .coin {
+            position: absolute;
+            z-index: 1;
+            bottom: 31px;
+            left: 50%;
+            display: grid;
+            width: 44px;
+            height: 44px;
+            place-items: center;
+            border: 3px solid #ffe58a;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffe990, #d99016);
+            box-shadow: 0 0 24px rgba(245,197,66,0.55);
+            color: #6e4100;
+            font-size: 1.4rem;
+            opacity: 0;
+            transform: translateX(-50%) scale(0.65);
+            transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .cup.show-coin .coin {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .status {
+            min-height: 52px;
+            margin: 12px 0;
+            color: #e2e8f0;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .status.success { color: var(--green); }
+        .status.miss { color: var(--red); }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .action-button,
+        .menu-link {
+            min-height: 48px;
+            padding: 12px 22px;
+            border: 0;
+            border-radius: 13px;
+            background: var(--gold);
+            color: #171717;
+            font: inherit;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 180ms ease, filter 180ms ease;
+        }
+
+        .action-button:hover,
+        .menu-link:hover {
+            filter: brightness(1.08);
+            transform: translateY(-2px);
+        }
+
+        .music-button {
+            background: #334155;
+            color: #fff;
+        }
+
+        .music-status {
+            min-height: 20px;
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .menu-link {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 18px;
+            background: #334155;
+            color: #fff;
+        }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .scoreboard { gap: 8px; }
+            .score-item { min-width: 0; flex: 1; padding-inline: 8px; }
+            .cups-area { height: 200px; }
+            .cup { width: 18%; height: 170px; }
+            .cup-art { height: 104px; bottom: 26px; }
+            .coin { bottom: 25px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="site-preferences.css">
+    <script src="site-preferences.js"></script>
+</head>
+<body>
+    <main class="game">
+        <h1>Jogo dos Copos</h1>
+        <p class="intro" data-explanatory-text>Acompanhe a moeda enquanto os copos trocam de lugar. Depois, escolha o copo que esconde a moeda!</p>
+
+        <div class="scoreboard" aria-label="Placar da partida">
+            <div class="score-item">Rodada<strong id="round-score">0 / 10</strong></div>
+            <div class="score-item">Pontos<strong id="points-score">0</strong></div>
+        </div>
+
+        <div class="cups-area" id="cups-area" aria-label="Cinco copos para escolher">
+            <button class="cup" type="button" aria-label="Copo 1" disabled>
+                <span class="coin" aria-hidden="true">¢</span><span class="cup-art" aria-hidden="true"></span>
+            </button>
+            <button class="cup" type="button" aria-label="Copo 2" disabled>
+                <span class="coin" aria-hidden="true">¢</span><span class="cup-art" aria-hidden="true"></span>
+            </button>
+            <button class="cup" type="button" aria-label="Copo 3" disabled>
+                <span class="coin" aria-hidden="true">¢</span><span class="cup-art" aria-hidden="true"></span>
+            </button>
+            <button class="cup" type="button" aria-label="Copo 4" disabled>
+                <span class="coin" aria-hidden="true">¢</span><span class="cup-art" aria-hidden="true"></span>
+            </button>
+            <button class="cup" type="button" aria-label="Copo 5" disabled>
+                <span class="coin" aria-hidden="true">¢</span><span class="cup-art" aria-hidden="true"></span>
+            </button>
+        </div>
+
+        <p class="status" id="game-status" role="status" aria-live="polite">Aperte “Começar” para esconder a moeda.</p>
+        <div class="actions">
+            <button class="action-button" type="button" id="start-button">Começar</button>
+            <button class="action-button" type="button" id="next-button" hidden>Próxima rodada</button>
+            <button class="action-button music-button" type="button" id="music-toggle" aria-pressed="false">Tocar trilha sonora</button>
+        </div>
+        <p class="music-status" id="music-status" role="status" aria-live="polite"></p>
+        <section id="game-over" hidden>
+            <h2>Partida concluída!</h2>
+            <p id="final-message"></p>
+            <button class="action-button" type="button" id="restart-button">Jogar novamente</button>
+        </section>
+        <a class="menu-link" href="index.html?menu=1#menu-container">Voltar ao menu</a>
+    </main>
+    <audio id="background-music" src="vidssave.com%20HQ%20I%20Jack%20Atlas%20Theme%20(Soundtrack)%20~%20Extended%20_%20Yu-Gi-Oh!%20Duel%20Links%20256KBPS.mp3" loop preload="none"></audio>
+
+    <script src="score-counter.js"></script>
+    <script>
+        const totalRounds = 10;
+        const shuffleCount = 8;
+        const cups = Array.from(document.querySelectorAll('.cup')).map((element, index) => ({
+            element,
+            slot: index
+        }));
+        const roundScore = document.getElementById('round-score');
+        const pointsScore = document.getElementById('points-score');
+        const status = document.getElementById('game-status');
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const gameOver = document.getElementById('game-over');
+        const finalMessage = document.getElementById('final-message');
+        const backgroundMusic = document.getElementById('background-music');
+        const musicToggle = document.getElementById('music-toggle');
+        const musicStatus = document.getElementById('music-status');
+        let currentRound = 0;
+        let points = 0;
+        let coinCup = null;
+        let isBusy = false;
+        let hasGuessed = false;
+
+        const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+        function positionCups() {
+            cups.forEach(({ element, slot }) => {
+                element.style.left = `${((slot + 1) / (cups.length + 1)) * 100}%`;
+                element.setAttribute('aria-label', `Copo ${slot + 1}`);
+            });
+        }
+
+        function resetCups() {
+            cups.forEach((cup, index) => {
+                cup.slot = index;
+                cup.element.classList.remove('lifted', 'show-coin');
+                cup.element.disabled = true;
+            });
+            positionCups();
+        }
+
+        async function beginRound() {
+            if (isBusy || currentRound >= totalRounds) return;
+            isBusy = true;
+            hasGuessed = false;
+            currentRound++;
+            roundScore.textContent = `${currentRound} / ${totalRounds}`;
+            nextButton.hidden = true;
+            startButton.hidden = true;
+            status.className = 'status';
+            status.textContent = 'Memorize a posição da moeda...';
+            resetCups();
+
+            coinCup = cups[Math.floor(Math.random() * cups.length)];
+            coinCup.element.classList.add('lifted', 'show-coin');
+            await wait(850);
+            coinCup.element.classList.remove('lifted', 'show-coin');
+            await wait(250);
+
+            for (let move = 0; move < shuffleCount; move++) {
+                const firstSlot = Math.floor(Math.random() * cups.length);
+                let secondSlot = Math.floor(Math.random() * (cups.length - 1));
+                if (secondSlot >= firstSlot) secondSlot++;
+
+                const firstCup = cups.find((cup) => cup.slot === firstSlot);
+                const secondCup = cups.find((cup) => cup.slot === secondSlot);
+                [firstCup.slot, secondCup.slot] = [secondCup.slot, firstCup.slot];
+                positionCups();
+                await wait(520);
+            }
+
+            status.textContent = 'Onde está a moeda? Escolha um copo.';
+            cups.forEach(({ element }) => {
+                element.disabled = false;
+            });
+            isBusy = false;
+        }
+
+        async function chooseCup(chosenCup) {
+            if (isBusy || hasGuessed || !coinCup) return;
+            hasGuessed = true;
+            cups.forEach(({ element }) => {
+                element.disabled = true;
+                element.classList.remove('lifted', 'show-coin');
+            });
+            coinCup.element.classList.add('lifted', 'show-coin');
+
+            if (chosenCup === coinCup) {
+                points += 100;
+                pointsScore.textContent = String(points);
+                status.className = 'status success';
+                status.textContent = 'Acertou! A moeda estava nesse copo. +100 pontos.';
+                if (window.GameScoreCounter) window.GameScoreCounter.add('copos', 100);
+            } else {
+                chosenCup.element.classList.add('lifted');
+                status.className = 'status miss';
+                status.textContent = 'Você errou! Veja onde estava a moeda. A partida vai voltar para a fase 1.';
+                isBusy = true;
+                await wait(1400);
+                currentRound = 0;
+                points = 0;
+                coinCup = null;
+                pointsScore.textContent = '0';
+                roundScore.textContent = `0 / ${totalRounds}`;
+                resetCups();
+                nextButton.hidden = true;
+                startButton.hidden = false;
+                startButton.textContent = 'Tentar novamente';
+                status.className = 'status';
+                status.textContent = 'Partida reiniciada. Aperte “Tentar novamente” para começar pela fase 1.';
+                isBusy = false;
+                return;
+            }
+
+            if (currentRound === totalRounds) {
+                nextButton.hidden = false;
+                nextButton.textContent = 'Ver resultado';
+            } else {
+                nextButton.hidden = false;
+                nextButton.textContent = 'Próxima rodada';
+            }
+        }
+
+        function showResults() {
+            document.getElementById('cups-area').hidden = true;
+            status.hidden = true;
+            nextButton.hidden = true;
+            gameOver.hidden = false;
+            finalMessage.textContent = `Você encontrou a moeda ${points / 100} de ${totalRounds} vezes e fez ${points} pontos.`;
+        }
+
+        function restartGame() {
+            currentRound = 0;
+            points = 0;
+            coinCup = null;
+            hasGuessed = false;
+            pointsScore.textContent = '0';
+            roundScore.textContent = `0 / ${totalRounds}`;
+            status.hidden = false;
+            status.className = 'status';
+            status.textContent = 'Aperte “Começar” para esconder a moeda.';
+            document.getElementById('cups-area').hidden = false;
+            gameOver.hidden = true;
+            startButton.hidden = false;
+            startButton.textContent = 'Começar';
+            nextButton.textContent = 'Próxima rodada';
+            resetCups();
+        }
+
+        cups.forEach((cup) => {
+            cup.element.addEventListener('click', () => chooseCup(cup));
+        });
+        startButton.addEventListener('click', beginRound);
+        nextButton.addEventListener('click', () => {
+            if (currentRound === totalRounds) {
+                showResults();
+                return;
+            }
+            beginRound();
+        });
+        document.getElementById('restart-button').addEventListener('click', restartGame);
+        musicToggle.addEventListener('click', async () => {
+            if (backgroundMusic.paused) {
+                try {
+                    await backgroundMusic.play();
+                    musicToggle.textContent = 'Pausar trilha sonora';
+                    musicToggle.setAttribute('aria-pressed', 'true');
+                    musicStatus.textContent = 'Trilha sonora ativada.';
+                } catch (error) {
+                    musicStatus.textContent = 'Não foi possível reproduzir a trilha sonora. Verifique se o arquivo está disponível.';
+                }
+                return;
+            }
+
+            backgroundMusic.pause();
+            musicToggle.textContent = 'Tocar trilha sonora';
+            musicToggle.setAttribute('aria-pressed', 'false');
+            musicStatus.textContent = 'Trilha sonora pausada.';
+        });
+        positionCups();
+    </script>
+</body>
+</html>
